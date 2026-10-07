@@ -4,10 +4,12 @@ LABEL org.opencontainers.image.title="ANDLINE Pterodactyl Runtime"
 
 ARG PHP_VERSION=8.5
 ARG NODE_MAJOR=24
+ARG NEWT_VERSION=1.18.1
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PHP_VERSION=${PHP_VERSION} \
     NODE_MAJOR=${NODE_MAJOR} \
+    NEWT_VERSION=${NEWT_VERSION} \
     HOME=/home/container \
     APP_DIR=/home/container/www
 
@@ -32,10 +34,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && npm install -g npm@latest \
     && rm -rf /var/lib/apt/lists/*
 
+RUN set -eux; \
+    arch="$(dpkg --print-architecture)"; \
+    case "$arch" in \
+      amd64) asset="newt_linux_amd64"; checksum="26deaf4478375b1f7380c4b8be18c8266ab4c476c6d5715972d629a512915832" ;; \
+      arm64) asset="newt_linux_arm64"; checksum="4def626ea3a7c25591e00855c32f5456295a871590571958d28ce470831d9952" ;; \
+      *) echo "Unsupported architecture for Newt: $arch" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL "https://github.com/fosrl/newt/releases/download/${NEWT_VERSION}/$asset" -o /usr/local/bin/newt; \
+    echo "$checksum  /usr/local/bin/newt" | sha256sum -c -; \
+    chmod +x /usr/local/bin/newt
+
 RUN useradd -m -d /home/container -s /bin/bash container \
     && mkdir -p /home/container/www /home/container/logs/nginx /home/container/logs/php /home/container/logs/node \
-       /home/container/logs/laravel /home/container/logs/build \
-       /home/container/runtime/nginx \
+       /home/container/logs/laravel /home/container/logs/build /home/container/logs/newt \
+       /home/container/runtime/nginx /home/container/runtime/newt \
        /home/container/tmp/nginx/client_temp /home/container/tmp/nginx/proxy_temp \
        /home/container/tmp/nginx/fastcgi_temp \
     && chown -R container:container /home/container
@@ -51,6 +64,7 @@ COPY scripts/start.sh /usr/local/bin/andline-start
 COPY scripts/run-websocket.sh /usr/local/bin/andline-websocket
 COPY scripts/run-queue.sh /usr/local/bin/andline-queue
 COPY scripts/run-scheduler.sh /usr/local/bin/andline-scheduler
+COPY scripts/run-newt.sh /usr/local/bin/andline-newt
 COPY entrypoint.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh /usr/local/bin/andline-* \
