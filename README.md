@@ -1,118 +1,255 @@
 # ANDLINE Pterodactyl Runtime
 
-Минимальный production-runtime для ANDLINE.
+Production runtime, tailored specifically for the private repository `ZinovevEzCode/andline`.
 
-## Состав
+## Runtime
 
 - Nginx
 - PHP 8.5 + PHP-FPM
 - Composer 2
 - Node.js 24 + npm
-- Laravel
-- основной Vue/Webpack build
-- отдельный Vue/Webpack build в `/admin`
-- Node.js WebSocket
-- Newt 1.18.1 для Pangolin (опционально)
-- Laravel queue worker
-- Laravel scheduler
 - Supervisor
-- MySQL/MariaDB + PostgreSQL/TimescaleDB PHP drivers
-- Git auto-deploy
-- раздельные логи
+- Newt 1.18.1 for Pangolin (optional)
 
-Удалены WordPress, Certbot, Cloudflared, ionCube и старый модульный orchestrator.
+PHP drivers include MariaDB/MySQL, PostgreSQL/TimescaleDB and SQLite support.
 
-## Структура приложения
+## ANDLINE repository layout
 
-По умолчанию:
+The runtime expects the real application layout:
 
-- Laravel/frontend: `/home/container/www`
-- Admin: `/home/container/www/admin`
-- Admin dist: `/home/container/www/admin/dist`
-- WebSocket: `/home/container/www/nodejs`
-- Logs: `/home/container/logs`
+```text
+/home/container/www
+├── artisan
+├── composer.json
+├── package.json
+├── webpack.mix.js
+├── admin/
+│   ├── package.json
+│   └── webpack.mix.js
+├── server/
+│   ├── package.json
+│   └── src/index.js
+├── public/
+└── resources/
+```
 
-Все пути для admin/WS можно переопределить переменными egg.
+### Public frontend
 
-## Git deploy
+Root `package.json` uses Laravel Mix / Webpack and is built with:
 
-При старте контейнера:
+```bash
+npm ci
+npm run prod
+```
 
-1. Если приложения ещё нет — клонируется `GIT_ADDRESS`.
-2. При `AUTO_PULL=1` ветка синхронизируется с `origin/GIT_BRANCH`.
-3. Текущий commit сравнивается с последним успешно собранным.
-4. Composer и npm запускаются только при новой ревизии (или `FORCE_BUILD=1`).
-5. Root frontend и `/admin` собираются отдельно.
-6. Устанавливаются зависимости WebSocket.
-7. Выполняются Laravel migrations/optimize.
-8. Supervisor запускает runtime-процессы.
+Output goes to `public/assets/js`.
 
-Для private repository используется `GIT_TOKEN`; он не записывается в remote URL.
+### Admin
 
-## Frontend
+`admin/webpack.mix.js` writes directly to:
 
-Root и admin не работают через webpack-dev-server в production.
+```text
+public/assets/admin
+```
 
-Автоматически ищется:
+The admin URL itself is a Laravel route/Blade shell:
 
-- `npm run build`
-- затем `npm run production`
+```text
+/admin
+/admin/*
+```
 
-Можно переопределить:
+Nginx therefore does **not** serve an independent `/admin/dist` SPA.
 
-- `ROOT_BUILD_COMMAND`
-- `ADMIN_BUILD_COMMAND`
+### AndBridge gateway
 
-## WebSocket
+The real gateway is:
 
-По умолчанию:
+```text
+/home/container/www/server/src/index.js
+```
 
-- каталог: `/home/container/www/nodejs`
-- команда: `npm start`
-- localhost port: `3000`
-- внешний path Nginx: `/nodejs`
+Runtime defaults:
 
-## Логи
+```env
+NODE_ENV=production
+ANDBRIDGE_GATEWAY_HOST=127.0.0.1
+ANDBRIDGE_GATEWAY_PORT=9443
+ANDBRIDGE_GATEWAY_PATH=/bridge
+```
 
-- `logs/entrypoint.log`
-- `logs/deploy.log`
-- `logs/build/frontend.log`
-- `logs/build/admin.log`
-- `logs/build/websocket.log`
-- `logs/nginx/*`
-- `logs/php/*`
-- `logs/node/*`
-- `logs/newt/newt.log`
-- `logs/newt/newt-error.log`
-- `logs/laravel/*`
-- `logs/supervisord.log`
+Supervisor starts it directly with:
+
+```bash
+node src/index.js
+```
+
+Nginx proxies:
+
+```text
+/bridge -> 127.0.0.1:9443
+```
+
+with 24-hour WebSocket read/send timeouts.
+
+The internal Laravel URL is generated automatically as:
+
+```text
+http://127.0.0.1:<PTERODACTYL_SERVER_PORT>
+```
+
+so the gateway talks back to Laravel through the local Nginx instance.
+
+## Git deployment
+
+Default repository:
+
+```text
+https://github.com/ZinovevEzCode/andline.git
+```
+
+The repository is private, so configure `GIT_TOKEN` in the Pterodactyl egg. The token is sent as an HTTP Basic header and is never written into `.git/config`.
+
+On startup:
+
+1. clone/sync `main`;
+2. create persistent `.env` from `.env.example` if missing;
+3. detect whether the Git revision changed;
+4. on a new revision:
+   - install Composer dependencies;
+   - build root Vue/Laravel Mix;
+   - build admin Materio/Laravel Mix;
+   - install `server/` production dependencies;
+5. generate `APP_KEY` and `JWT_SECRET` if missing;
+6. clear stale Laravel caches;
+7. run migrations if enabled;
+8. optionally run seeders;
+9. rebuild production caches;
+10. start services through Supervisor.
+
+Changing Pterodactyl environment variables does not require a source-code change: Laravel caches are rebuilt on each container start.
+
+## Composer path-repository compatibility
+
+The current ANDLINE `composer.lock` contains packages installed from local Windows paths such as:
+
+```text
+C:/Users/User/Desktop/dreamcms/vendor/...
+```
+
+Those paths do not exist in Linux/Pterodactyl.
+
+Deployment first tries the normal:
+
+```bash
+composer install --no-dev --prefer-dist --optimize-autoloader
+```
+
+If it fails and the lock contains path distributions, `COMPOSER_PATH_FALLBACK=1` creates a temporary production Composer definition without the local `repositories` section and resolves the declared package constraints from public Composer repositories.
+
+This is a compatibility bridge. Long term, the ANDLINE repository should regenerate `composer.lock` from portable repositories so deployment is completely reproducible.
+
+## Supervisor processes
+
+```text
+php-fpm
+nginx
+andbridge gateway
+laravel queue worker
+laravel scheduler
+newt (optional)
+```
+
+Newt starts last so the local web/gateway stack is already available before Pangolin exposes it.
+
+## Logs
+
+```text
+/home/container/logs/
+├── entrypoint.log
+├── deploy.log
+├── supervisord.log
+├── build/
+│   ├── composer.log
+│   ├── frontend.log
+│   ├── admin.log
+│   └── gateway.log
+├── nginx/
+├── php/
+├── laravel/
+├── node/
+│   ├── andbridge-gateway.log
+│   └── andbridge-gateway-error.log
+└── newt/
+```
+
+## Important Pterodactyl variables
+
+Application:
+
+```env
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://your-domain.example
+```
+
+Primary database:
+
+```env
+DB_CONNECTION=mariadb
+DB_HOST=...
+DB_PORT=3306
+DB_DATABASE=andline
+DB_USERNAME=andline
+DB_PASSWORD=...
+```
+
+TimescaleDB:
+
+```env
+TIMESCALE_HOST=...
+TIMESCALE_PORT=5432
+TIMESCALE_DATABASE=andline_ts
+TIMESCALE_USERNAME=andline
+TIMESCALE_PASSWORD=...
+TIMESCALE_SSLMODE=prefer
+```
+
+AndBridge:
+
+```env
+ANDBRIDGE_GATEWAY_SECRET=<long-random-secret>
+ANDBRIDGE_GATEWAY_PORT=9443
+ANDBRIDGE_GATEWAY_PATH=/bridge
+ANDBRIDGE_WSS_URL=wss://your-domain.example/bridge
+ANDBRIDGE_COLLISION_MODE=LAST_WINS
+```
+
+Pangolin/Newt:
+
+```env
+NEWT_ENABLED=1
+PANGOLIN_ENDPOINT=https://pangolin.example
+NEWT_ID=...
+NEWT_SECRET=...
+```
+
+## Nginx + Pangolin
+
+Nginx preserves an incoming `X-Forwarded-Proto` from Pangolin/Newt. This matters because the AndBridge gateway rejects insecure WebSocket connections in production.
+
+Laravel also receives the forwarded HTTPS scheme through FastCGI.
 
 ## Pterodactyl
 
-Импортируй `egg-andline.json`.
+Import:
 
-Docker image после успешной GitHub Actions сборки:
+```text
+egg-andline.json
+```
 
-`ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline`
+Target image after CI publishes it:
 
-## Newt / Pangolin
-
-Newt встроен в Docker image и работает в userspace-режиме под Supervisor.
-
-Переменные Pterodactyl:
-
-- `NEWT_ENABLED=1`
-- `PANGOLIN_ENDPOINT=https://pangolin.example.com`
-- `NEWT_ID=<site id>`
-- `NEWT_SECRET=<site secret>`
-
-`NEWT_ID` и `NEWT_SECRET` в egg скрыты от обычного просмотра. Не добавляй эти значения в Git или `.env.example`.
-
-При `NEWT_ENABLED=0` Newt не подключается и не влияет на остальные сервисы контейнера.
-
-Health-файл Newt по умолчанию: `/home/container/runtime/newt/healthy`.
-
-> Upstream Newt постепенно заменяется Pangolin CLI (`pangolin site up`). Runtime пока фиксирует Newt 1.18.1, чтобы деплой был воспроизводимым.
-
-
-CI: ANDLINE runtime build enabled.
+```text
+ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline
+```
