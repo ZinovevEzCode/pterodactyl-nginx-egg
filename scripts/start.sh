@@ -12,7 +12,14 @@ ANDBRIDGE_GATEWAY_PATH="/${ANDBRIDGE_GATEWAY_PATH#/}"
 ANDBRIDGE_GATEWAY_PATH="${ANDBRIDGE_GATEWAY_PATH%/}"
 export ANDBRIDGE_GATEWAY_PATH
 
-mkdir -p   /home/container/runtime/nginx   /home/container/tmp/nginx/client_temp   /home/container/tmp/nginx/proxy_temp   /home/container/tmp/nginx/fastcgi_temp   "$LOG_DIR/nginx" "$LOG_DIR/php" "$LOG_DIR/node" "$LOG_DIR/laravel" "$LOG_DIR/newt"
+mkdir -p \
+  /home/container/runtime/nginx \
+  /home/container/tmp/nginx/client_temp \
+  /home/container/tmp/nginx/proxy_temp \
+  /home/container/tmp/nginx/fastcgi_temp \
+  /home/container/tmp/nginx/uwsgi_temp \
+  /home/container/tmp/nginx/scgi_temp \
+  "$LOG_DIR/nginx" "$LOG_DIR/php" "$LOG_DIR/node" "$LOG_DIR/laravel" "$LOG_DIR/newt"
 
 envsubst '$SERVER_PORT $APP_DIR $ANDBRIDGE_GATEWAY_PORT $ANDBRIDGE_GATEWAY_PATH'   < /opt/andline/nginx/andline.conf.template   > /home/container/runtime/nginx/andline.conf
 
