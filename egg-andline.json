@@ -6,11 +6,11 @@
   },
   "exported_at": "2026-10-07T00:00:00+00:00",
   "name": "ANDLINE Monolith",
-  "author": "ZinovevEzCode",
+  "author": "201980012+ZinovevEzCode@users.noreply.github.com",
   "description": "Pterodactyl runtime tailored for ZinovevEzCode/andline: Laravel 13, Vue 3 + Laravel Mix, Materio admin build, AndBridge gateway on /bridge:9443, queue/scheduler, TimescaleDB drivers and optional Newt/Pangolin.",
   "features": null,
   "docker_images": {
-    "ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline": "ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline"
+    "ANDLINE PHP 8.5 / Node 24": "ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline"
   },
   "file_denylist": [],
   "startup": "/entrypoint.sh",
@@ -52,10 +52,10 @@
       "name": "Git token",
       "description": "GitHub token required for the private ANDLINE repository.",
       "env_variable": "GIT_TOKEN",
-      "default_value": "",
+      "default_value": "replace-me",
       "user_viewable": false,
       "user_editable": true,
-      "rules": "nullable|string",
+      "rules": "required|string",
       "field_type": "text"
     },
     {
@@ -135,7 +135,7 @@
       "default_value": "http://localhost",
       "user_viewable": true,
       "user_editable": true,
-      "rules": "required|url",
+      "rules": "required|string",
       "field_type": "text"
     },
     {
@@ -195,7 +195,7 @@
       "default_value": "3306",
       "user_viewable": true,
       "user_editable": true,
-      "rules": "required|integer|min:1|max:65535",
+      "rules": "required|string|max:5",
       "field_type": "text"
     },
     {
@@ -245,7 +245,7 @@
       "default_value": "5432",
       "user_viewable": true,
       "user_editable": true,
-      "rules": "required|integer|min:1|max:65535",
+      "rules": "required|string|max:5",
       "field_type": "text"
     },
     {
@@ -305,7 +305,7 @@
       "default_value": "9443",
       "user_viewable": true,
       "user_editable": true,
-      "rules": "required|integer|min:1024|max:65535",
+      "rules": "required|string|max:5",
       "field_type": "text"
     },
     {
@@ -322,7 +322,7 @@
       "name": "AndBridge gateway secret",
       "description": "Shared secret used between the Node gateway and Laravel internal API.",
       "env_variable": "ANDBRIDGE_GATEWAY_SECRET",
-      "default_value": "",
+      "default_value": "change-me-andbridge-secret-xx",
       "user_viewable": false,
       "user_editable": true,
       "rules": "required|string|min:24",
@@ -385,7 +385,7 @@
       "default_value": "",
       "user_viewable": true,
       "user_editable": true,
-      "rules": "nullable|url",
+      "rules": "nullable|string",
       "field_type": "text"
     },
     {
