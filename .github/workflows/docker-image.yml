@@ -1,9 +1,9 @@
-name: Build ANDLINE runtime
+name: Build and publish ANDLINE runtime
 
 on:
   push:
     branches:
-      - andline-runtime
+      - main
   pull_request:
     branches:
       - main
@@ -13,8 +13,70 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  docker:
+  validate-egg:
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Validate PTDL_v2 egg
+        run: python3 scripts/validate-egg.py egg-andline.json
+
+  smoke:
+    runs-on: ubuntu-latest
+    needs: validate-egg
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build amd64 smoke image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          push: false
+          build-args: |
+            PHP_VERSION=8.5
+            NODE_MAJOR=24
+            NEWT_VERSION=1.18.1
+          tags: andline-runtime:smoke
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Runtime smoke test
+        run: |
+          docker run --rm --entrypoint /bin/bash andline-runtime:smoke -lc '
+            set -e
+            php -v
+            php -m | grep -q pdo_mysql
+            php -m | grep -q pdo_pgsql
+            php -m | grep -q sockets
+            node --version
+            npm --version
+            composer --version
+            nginx -v
+            supervisord --version
+            newt --version || newt --help >/dev/null
+            bash -n /entrypoint.sh
+            bash -n /usr/local/bin/andline-deploy
+            bash -n /usr/local/bin/andline-start
+            bash -n /usr/local/bin/andline-websocket
+            bash -n /usr/local/bin/andline-queue
+            bash -n /usr/local/bin/andline-scheduler
+            bash -n /usr/local/bin/andline-newt
+          '
+
+  publish:
+    runs-on: ubuntu-latest
+    needs:
+      - validate-egg
+      - smoke
+    if: github.event_name != 'pull_request'
 
     permissions:
       contents: read
@@ -34,19 +96,18 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       - name: Login to GHCR
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build and publish amd64/arm64
         uses: docker/build-push-action@v7
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           build-args: |
             PHP_VERSION=8.5
             NODE_MAJOR=24
@@ -54,6 +115,6 @@ jobs:
           tags: |
             ghcr.io/${{ env.IMAGE_NAME }}:andline
             ghcr.io/${{ env.IMAGE_NAME }}:8.5-andline
-            ghcr.io/${{ env.IMAGE_NAME }}:andline-${{ github.sha }}
+            ghcr.io/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
