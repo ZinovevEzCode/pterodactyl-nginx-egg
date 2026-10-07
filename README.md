@@ -305,3 +305,6 @@ Target image after CI publishes it:
 ```text
 ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline
 ```
+
+
+Automatic GHCR publishing is enabled from `main`.
