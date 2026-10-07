@@ -1,0 +1,35 @@
+name: Test ANDLINE runtime
+
+on:
+  workflow_dispatch:
+
+jobs:
+  docker-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout ANDLINE runtime branch
+        uses: actions/checkout@v7
+        with:
+          ref: andline-runtime
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build ANDLINE image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: false
+          build-args: |
+            PHP_VERSION=8.5
+            NODE_MAJOR=24
+            NEWT_VERSION=1.18.1
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
