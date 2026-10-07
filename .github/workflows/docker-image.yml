@@ -54,7 +54,7 @@ jobs:
 
       - name: Runtime smoke test
         run: |
-          docker run --rm --entrypoint /bin/bash andline-runtime:smoke -lc '
+          docker run --rm -v "$PWD/scripts/smoke-timescaledb.sh:/tmp/smoke-timescaledb.sh:ro" --entrypoint /bin/bash andline-runtime:smoke -lc '
             set -e
             php -v
             php -m | grep -q pdo_mysql
@@ -73,6 +73,8 @@ jobs:
             bash -n /usr/local/bin/andline-queue
             bash -n /usr/local/bin/andline-scheduler
             bash -n /usr/local/bin/andline-newt
+            bash -n /usr/local/bin/andline-timescaledb
+            bash /tmp/smoke-timescaledb.sh
           '
 
   publish:

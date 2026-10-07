@@ -8,6 +8,7 @@ Production runtime, tailored specifically for the private repository `ZinovevEzC
 - PHP 8.5 + PHP-FPM
 - Composer 2
 - Node.js 24 + npm
+- PostgreSQL 17 + TimescaleDB 2.30.2 (local persistent service)
 - Supervisor
 - Newt 1.18.1 for Pangolin (optional)
 
@@ -152,6 +153,7 @@ This is a compatibility bridge. Long term, the ANDLINE repository should regener
 ## Supervisor processes
 
 ```text
+timescaledb (PostgreSQL, optional)
 php-fpm
 nginx
 andbridge gateway
@@ -308,3 +310,33 @@ ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline
 
 
 Automatic GHCR publishing is enabled from `main`.
+
+## Local TimescaleDB service
+
+The image installs PostgreSQL 17 and TimescaleDB 2.30.2. Supervisor runs PostgreSQL
+before the web services, listening only on `127.0.0.1:5432`.
+No public Pterodactyl allocation is required.
+
+- `TIMESCALE_ENABLED=1` enables the local service (default); set to `0` to use an external database.
+- `TIMESCALE_DB_PORT=5432` controls its local port.
+- Data persists in `/home/container/timescaledb/data`.
+- Connection settings persist in `/home/container/timescaledb/connection.env` (mode 600).
+- Logs are in `/home/container/logs/timescaledb`.
+- The first startup uses `TIMESCALE_DATABASE` and `TIMESCALE_USERNAME`
+  (defaults `andline_ts` and `andline`). If `TIMESCALE_PASSWORD` is empty,
+  it generates a password once.
+- With the local service enabled, startup exports the persisted settings to the
+  application's existing `TIMESCALE_*` variables before deployment and migrations.
+  The generated application role is not a PostgreSQL superuser.
+- Later changes to panel credentials do not replace the persisted credentials;
+  change PostgreSQL credentials and the connection file together when rotating them.
+
+Initialization creates the database and enables the TimescaleDB extension.
+It does not replace the application's primary MariaDB/MySQL database.
+Back up the persistent cluster before upgrading PostgreSQL; changing its major
+version requires a database migration. The startup script refuses an incompatible
+existing cluster rather than reinitializing it.
+
+CI creates a hypertable through the application role and verifies its rows survive
+a database restart before publishing the image. Reimport the egg to expose the
+new service toggle and port fields in the panel; existing eggs use the defaults.

@@ -5,10 +5,13 @@ LABEL org.opencontainers.image.title="ANDLINE Pterodactyl Runtime"
 ARG PHP_VERSION=8.5
 ARG NODE_MAJOR=24
 ARG NEWT_VERSION=1.18.1
+ARG PG_MAJOR=17
+ARG TIMESCALE_VERSION=2.30.2
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PHP_VERSION=${PHP_VERSION} \
     NODE_MAJOR=${NODE_MAJOR} \
+    PG_MAJOR=${PG_MAJOR} \
     NEWT_VERSION=${NEWT_VERSION} \
     HOME=/home/container \
     APP_DIR=/home/container/www
@@ -33,6 +36,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -f /tmp/composer-setup.php \
     && npm install -g npm@latest \
     && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /etc/postgresql-common \
+    && echo 'create_main_cluster = false' > /etc/postgresql-common/createcluster.conf \
+    && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/postgresql.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-${PG_MAJOR} postgresql-client-${PG_MAJOR} postgresql-server-dev-${PG_MAJOR} build-essential cmake libssl-dev \
+    && git clone --depth 1 --branch "${TIMESCALE_VERSION}" https://github.com/timescale/timescaledb.git /tmp/timescaledb \
+    && cd /tmp/timescaledb \
+    && ./bootstrap -DPG_CONFIG=/usr/lib/postgresql/${PG_MAJOR}/bin/pg_config -DREGRESS_CHECKS=OFF -DTAP_CHECKS=OFF -DWARNINGS_AS_ERRORS=OFF \
+    && cmake --build build --parallel 2 \
+    && cmake --install build \
+    && rm -rf /tmp/timescaledb /var/lib/apt/lists/*
 
 RUN set -eux; \
     arch="$(dpkg --print-architecture)"; \
@@ -61,6 +77,7 @@ COPY php/php.ini /opt/andline/php/php.ini
 COPY supervisor/supervisord.conf /opt/andline/supervisor/supervisord.conf
 COPY scripts/deploy.sh /usr/local/bin/andline-deploy
 COPY scripts/start.sh /usr/local/bin/andline-start
+COPY scripts/run-timescaledb.sh /usr/local/bin/andline-timescaledb
 COPY scripts/run-websocket.sh /usr/local/bin/andline-websocket
 COPY scripts/run-queue.sh /usr/local/bin/andline-queue
 COPY scripts/run-scheduler.sh /usr/local/bin/andline-scheduler

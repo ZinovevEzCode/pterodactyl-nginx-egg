@@ -7,7 +7,7 @@
     "exported_at": "2026-10-07T00:00:00+00:00",
     "name": "ANDLINE Monolith",
     "author": "xypexxypex@list.ru",
-    "description": "Pterodactyl runtime tailored for ZinovevEzCode/andline: Laravel 13, Vue 3 + Laravel Mix, Materio admin build, AndBridge gateway on /bridge:9443, queue/scheduler, TimescaleDB drivers and optional Newt/Pangolin.",
+    "description": "Pterodactyl runtime tailored for ZinovevEzCode/andline: Laravel 13, Vue 3 + Laravel Mix, Materio admin build, AndBridge gateway on /bridge:9443, queue/scheduler, local PostgreSQL 17 + TimescaleDB service and optional Newt/Pangolin.",
     "features": null,
     "docker_images": {
         "ANDLINE PHP 8.5 / Node 24": "ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline"
@@ -436,6 +436,26 @@
             "user_viewable": false,
             "user_editable": true,
             "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "TimescaleDB enabled",
+            "description": "Run the local PostgreSQL/TimescaleDB service. Persistent data: /home/container/timescaledb. Credentials are generated once in connection.env.",
+            "env_variable": "TIMESCALE_ENABLED",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "TimescaleDB port",
+            "description": "Loopback-only database port; no external allocation required. Set before the first start.",
+            "env_variable": "TIMESCALE_DB_PORT",
+            "default_value": "5432",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|min:1024|max:65535",
             "field_type": "text"
         }
     ]
