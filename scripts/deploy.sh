@@ -43,14 +43,33 @@ npm_build() {
   local dir="$1"
   local name="$2"
   local command="$3"
+  local lock_file="$dir/package-lock.json"
+  local lock_marker="/home/container/.andline-npm-${name}.locksha"
+  local lock_hash=""
+  local prev_hash=""
 
   [[ -f "$dir/package.json" ]] || {
     echo "[BUILD][$name] package.json not found in $dir"
     return 1
   }
 
-  echo "[BUILD][$name] npm ci"
-  run_logged "$LOG_DIR/build/$name.log" bash -lc "cd '$dir' && npm ci"
+  export npm_config_cache="${npm_config_cache:-/home/container/.npm}"
+  mkdir -p "$npm_config_cache"
+
+  if [[ -f "$lock_file" ]]; then
+    lock_hash="$(sha256sum "$lock_file" | awk '{print $1}')"
+  fi
+  prev_hash="$(cat "$lock_marker" 2>/dev/null || true)"
+
+  if [[ ! -d "$dir/node_modules" ]] || [[ -z "$lock_hash" ]] || [[ "$lock_hash" != "$prev_hash" ]] || is_true "${FORCE_NPM_CI:-0}"; then
+    echo "[BUILD][$name] npm ci"
+    run_logged "$LOG_DIR/build/$name.log" bash -lc "cd '$dir' && npm ci"
+    if [[ -n "$lock_hash" ]]; then
+      printf '%s\n' "$lock_hash" > "$lock_marker"
+    fi
+  else
+    echo "[BUILD][$name] npm ci skipped (lock unchanged, node_modules present)"
+  fi
 
   echo "[BUILD][$name] $command"
   run_logged "$LOG_DIR/build/$name.log" bash -lc "cd '$dir' && $command"
@@ -124,7 +143,9 @@ elif is_true "${AUTO_PULL:-1}"; then
   cd "$APP_DIR"
   echo "[DEPLOY] Syncing origin/$GIT_BRANCH."
   git_auth fetch --prune origin "$GIT_BRANCH"
+  # Discard previous build dirt on tracked assets so the tree matches origin.
   git checkout -B "$GIT_BRANCH" "origin/$GIT_BRANCH"
+  git reset --hard "origin/$GIT_BRANCH"
 fi
 
 cd "$APP_DIR"
@@ -145,14 +166,35 @@ fi
 if [[ "$NEEDS_BUILD" -eq 1 ]]; then
   echo "[DEPLOY] Building revision $HEAD_SHA."
 
+  export COMPOSER_HOME="${COMPOSER_HOME:-/home/container/.composer}"
+  export npm_config_cache="${npm_config_cache:-/home/container/.npm}"
+  mkdir -p "$COMPOSER_HOME" "$npm_config_cache"
+
   composer_install
 
-  npm_build "$APP_DIR" "frontend" "${ROOT_BUILD_COMMAND:-npm run prod}"
-  npm_build "$ADMIN_DIR" "admin" "${ADMIN_BUILD_COMMAND:-npm run prod}"
+  if is_true "${BUILD_FRONTEND:-1}"; then
+    npm_build "$APP_DIR" "frontend" "${ROOT_BUILD_COMMAND:-npm run prod}"
+  else
+    echo "[BUILD][frontend] skipped (BUILD_FRONTEND=0)"
+  fi
+
+  if is_true "${BUILD_ADMIN:-1}"; then
+    npm_build "$ADMIN_DIR" "admin" "${ADMIN_BUILD_COMMAND:-npm run prod}"
+  else
+    echo "[BUILD][admin] skipped (BUILD_ADMIN=0)"
+  fi
 
   echo "[BUILD][gateway] Installing production dependencies."
   if [[ -f "$GATEWAY_DIR/package-lock.json" ]]; then
-    run_logged "$LOG_DIR/build/gateway.log" bash -lc "cd '$GATEWAY_DIR' && npm ci --omit=dev"
+    local_gw_marker="/home/container/.andline-npm-gateway.locksha"
+    local_gw_hash="$(sha256sum "$GATEWAY_DIR/package-lock.json" | awk '{print $1}')"
+    local_gw_prev="$(cat "$local_gw_marker" 2>/dev/null || true)"
+    if [[ ! -d "$GATEWAY_DIR/node_modules" ]] || [[ "$local_gw_hash" != "$local_gw_prev" ]] || is_true "${FORCE_NPM_CI:-0}"; then
+      run_logged "$LOG_DIR/build/gateway.log" bash -lc "cd '$GATEWAY_DIR' && npm ci --omit=dev"
+      printf '%s\n' "$local_gw_hash" > "$local_gw_marker"
+    else
+      echo "[BUILD][gateway] npm ci skipped (lock unchanged)"
+    fi
   else
     run_logged "$LOG_DIR/build/gateway.log" bash -lc "cd '$GATEWAY_DIR' && npm install --omit=dev"
   fi

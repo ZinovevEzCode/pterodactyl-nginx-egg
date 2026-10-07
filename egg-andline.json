@@ -79,6 +79,36 @@
             "field_type": "text"
         },
         {
+            "name": "Build frontend",
+            "description": "Run root Vue/Laravel Mix build when a new Git revision is deployed. Set 0 to skip site assets.",
+            "env_variable": "BUILD_FRONTEND",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Build admin",
+            "description": "Run Materio admin Mix build when a new Git revision is deployed. Set 0 on a site-only/dev server to skip the slow admin npm ci + webpack.",
+            "env_variable": "BUILD_ADMIN",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Force npm ci",
+            "description": "Force npm ci even when package-lock.json is unchanged and node_modules already exists.",
+            "env_variable": "FORCE_NPM_CI",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
             "name": "Composer path fallback",
             "description": "ANDLINE lock currently contains local Windows path packages. If normal install fails, resolve the same constraints from public Composer repositories.",
             "env_variable": "COMPOSER_PATH_FALLBACK",
