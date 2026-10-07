@@ -12,6 +12,7 @@
 - основной Vue/Webpack build
 - отдельный Vue/Webpack build в `/admin`
 - Node.js WebSocket
+- Newt 1.18.1 для Pangolin (опционально)
 - Laravel queue worker
 - Laravel scheduler
 - Supervisor
@@ -81,6 +82,8 @@ Root и admin не работают через webpack-dev-server в production.
 - `logs/nginx/*`
 - `logs/php/*`
 - `logs/node/*`
+- `logs/newt/newt.log`
+- `logs/newt/newt-error.log`
 - `logs/laravel/*`
 - `logs/supervisord.log`
 
@@ -91,3 +94,22 @@ Root и admin не работают через webpack-dev-server в production.
 Docker image после успешной GitHub Actions сборки:
 
 `ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline`
+
+## Newt / Pangolin
+
+Newt встроен в Docker image и работает в userspace-режиме под Supervisor.
+
+Переменные Pterodactyl:
+
+- `NEWT_ENABLED=1`
+- `PANGOLIN_ENDPOINT=https://pangolin.example.com`
+- `NEWT_ID=<site id>`
+- `NEWT_SECRET=<site secret>`
+
+`NEWT_ID` и `NEWT_SECRET` в egg скрыты от обычного просмотра. Не добавляй эти значения в Git или `.env.example`.
+
+При `NEWT_ENABLED=0` Newt не подключается и не влияет на остальные сервисы контейнера.
+
+Health-файл Newt по умолчанию: `/home/container/runtime/newt/healthy`.
+
+> Upstream Newt постепенно заменяется Pangolin CLI (`pangolin site up`). Runtime пока фиксирует Newt 1.18.1, чтобы деплой был воспроизводимым.
