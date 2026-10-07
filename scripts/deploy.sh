@@ -59,6 +59,10 @@ npm_build() {
 composer_install() {
   local composer_log="$LOG_DIR/build/composer.log"
 
+  if [[ -n "${GIT_TOKEN:-}" ]]; then
+    export COMPOSER_AUTH="{\"github-oauth\":{\"github.com\":\"${GIT_TOKEN}\"}}"
+  fi
+
   echo "[BUILD][composer] composer install"
   if run_logged "$composer_log" bash -lc "cd '$APP_DIR' && composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader"; then
     return 0
