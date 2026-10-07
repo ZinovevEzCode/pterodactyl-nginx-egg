@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
        php${PHP_VERSION}-mysql php${PHP_VERSION}-pgsql \
        php${PHP_VERSION}-curl php${PHP_VERSION}-mbstring php${PHP_VERSION}-xml \
        php${PHP_VERSION}-bcmath php${PHP_VERSION}-intl php${PHP_VERSION}-gd \
-       php${PHP_VERSION}-zip php${PHP_VERSION}-opcache php${PHP_VERSION}-sockets \
+       php${PHP_VERSION}-zip php${PHP_VERSION}-sockets \
     && ln -sf "/usr/sbin/php-fpm${PHP_VERSION}" /usr/local/bin/php-fpm-runtime \
     && curl -fsSL https://getcomposer.org/installer -o /tmp/composer-setup.php \
     && php /tmp/composer-setup.php --quiet --install-dir=/usr/local/bin --filename=composer \
