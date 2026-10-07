@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get install -y --no-install-recommends \
        nodejs \
        php${PHP_VERSION}-fpm php${PHP_VERSION}-cli php${PHP_VERSION}-common \
-       php${PHP_VERSION}-mysql php${PHP_VERSION}-pgsql \
+       php${PHP_VERSION}-mysql php${PHP_VERSION}-pgsql php${PHP_VERSION}-sqlite3 \
        php${PHP_VERSION}-curl php${PHP_VERSION}-mbstring php${PHP_VERSION}-xml \
        php${PHP_VERSION}-bcmath php${PHP_VERSION}-intl php${PHP_VERSION}-gd \
        php${PHP_VERSION}-zip php${PHP_VERSION}-sockets \
