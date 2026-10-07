@@ -1,4 +1,4 @@
-name: Test ANDLINE runtime
+name: Publish ANDLINE runtime
 
 on:
   workflow_dispatch:
@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      packages: write
 
     steps:
       - name: Checkout ANDLINE runtime branch
@@ -15,21 +16,34 @@ jobs:
         with:
           ref: andline-runtime
 
+      - name: Lowercase image name
+        run: echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
 
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Build ANDLINE image
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push ANDLINE image
         uses: docker/build-push-action@v7
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          push: false
+          push: true
           build-args: |
             PHP_VERSION=8.5
             NODE_MAJOR=24
             NEWT_VERSION=1.18.1
+          tags: |
+            ghcr.io/${{ env.IMAGE_NAME }}:andline
+            ghcr.io/${{ env.IMAGE_NAME }}:8.5-andline
           cache-from: type=gha
           cache-to: type=gha,mode=max
