@@ -1,9 +1,13 @@
-#!/bin/bash
-cd /home/container
+#!/usr/bin/env bash
+set -Eeuo pipefail
 
-# Replace Startup Variables
-MODIFIED_STARTUP=$(echo -e ${STARTUP} | sed -e 's/{{/${/g' -e 's/}}/}/g')
-echo -e ":/home/container$ ${MODIFIED_STARTUP}"
+export APP_DIR="${APP_DIR:-/home/container/www}"
+export LOG_DIR="${LOG_DIR:-/home/container/logs}"
 
-# Run the Server
-eval ${MODIFIED_STARTUP}
+mkdir -p "$APP_DIR" "$LOG_DIR"/{nginx,php,node,laravel,build,newt} /home/container/runtime/nginx /home/container/runtime/newt /home/container/tmp/nginx/{client_temp,proxy_temp,fastcgi_temp}
+
+exec > >(tee -a "$LOG_DIR/entrypoint.log") 2>&1
+
+echo "[ANDLINE] Container startup: $(date -Iseconds)"
+/usr/local/bin/andline-deploy
+exec /usr/local/bin/andline-start

@@ -1,0 +1,412 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED FOR PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2026-10-07T00:00:00+00:00",
+    "name": "ANDLINE Monolith",
+    "author": "xypexxypex@list.ru",
+    "description": "Pterodactyl runtime tailored for ZinovevEzCode/andline: Laravel 13, Vue 3 + Laravel Mix, Materio admin build, AndBridge gateway on /bridge:9443, queue/scheduler, TimescaleDB drivers and optional Newt/Pangolin.",
+    "features": null,
+    "docker_images": {
+        "ANDLINE PHP 8.5 / Node 24": "ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline"
+    },
+    "file_denylist": [],
+    "startup": "/entrypoint.sh",
+    "config": {
+        "files": "{}",
+        "startup": "{\"done\":\"Services successfully launched\"}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\nset -e\nmkdir -p /mnt/server/www /mnt/server/logs /mnt/server/tmp\necho '[ANDLINE] Runtime directories created. App clone/update happens at runtime startup.'\n",
+            "container": "debian:bookworm-slim",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Git repository",
+            "description": "ANDLINE application repository.",
+            "env_variable": "GIT_ADDRESS",
+            "default_value": "https://github.com/ZinovevEzCode/andline.git",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Git branch",
+            "description": "ANDLINE branch to deploy.",
+            "env_variable": "GIT_BRANCH",
+            "default_value": "main",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Git token",
+            "description": "GitHub token required for the private ANDLINE repository.",
+            "env_variable": "GIT_TOKEN",
+            "default_value": "",
+            "user_viewable": false,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Auto pull",
+            "description": "Synchronize with origin/GIT_BRANCH on every server start.",
+            "env_variable": "AUTO_PULL",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Force build",
+            "description": "Force Composer/npm rebuild even if the Git commit is unchanged.",
+            "env_variable": "FORCE_BUILD",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Composer path fallback",
+            "description": "ANDLINE lock currently contains local Windows path packages. If normal install fails, resolve the same constraints from public Composer repositories.",
+            "env_variable": "COMPOSER_PATH_FALLBACK",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Root frontend build",
+            "description": "ANDLINE public Vue/Laravel Mix production build command.",
+            "env_variable": "ROOT_BUILD_COMMAND",
+            "default_value": "npm run prod",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Admin build",
+            "description": "ANDLINE Materio admin Laravel Mix production build command.",
+            "env_variable": "ADMIN_BUILD_COMMAND",
+            "default_value": "npm run prod",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Application environment",
+            "description": "Laravel APP_ENV.",
+            "env_variable": "APP_ENV",
+            "default_value": "production",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Application debug",
+            "description": "Laravel APP_DEBUG. Keep false in production.",
+            "env_variable": "APP_DEBUG",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Application URL",
+            "description": "Public ANDLINE HTTPS URL used by Laravel.",
+            "env_variable": "APP_URL",
+            "default_value": "http://localhost",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Run migrations",
+            "description": "Run php artisan migrate --force on startup.",
+            "env_variable": "RUN_MIGRATIONS",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Run seeders",
+            "description": "Run php artisan db:seed --force. Enable only when you intentionally want seed data.",
+            "env_variable": "RUN_SEEDERS",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Laravel optimize",
+            "description": "Rebuild Laravel production caches after environment and migrations.",
+            "env_variable": "LARAVEL_OPTIMIZE",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Database driver",
+            "description": "Primary ANDLINE database connection.",
+            "env_variable": "DB_CONNECTION",
+            "default_value": "mariadb",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Database host",
+            "description": "MariaDB/MySQL host.",
+            "env_variable": "DB_HOST",
+            "default_value": "127.0.0.1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Database port",
+            "description": "MariaDB/MySQL port.",
+            "env_variable": "DB_PORT",
+            "default_value": "3306",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:5",
+            "field_type": "text"
+        },
+        {
+            "name": "Database name",
+            "description": "ANDLINE primary database.",
+            "env_variable": "DB_DATABASE",
+            "default_value": "andline",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Database username",
+            "description": "ANDLINE primary database user.",
+            "env_variable": "DB_USERNAME",
+            "default_value": "andline",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Database password",
+            "description": "ANDLINE primary database password.",
+            "env_variable": "DB_PASSWORD",
+            "default_value": "",
+            "user_viewable": false,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Timescale host",
+            "description": "TimescaleDB/PostgreSQL host for telemetry and time-series data.",
+            "env_variable": "TIMESCALE_HOST",
+            "default_value": "127.0.0.1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Timescale port",
+            "description": "TimescaleDB/PostgreSQL port.",
+            "env_variable": "TIMESCALE_PORT",
+            "default_value": "5432",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:5",
+            "field_type": "text"
+        },
+        {
+            "name": "Timescale database",
+            "description": "TimescaleDB database name.",
+            "env_variable": "TIMESCALE_DATABASE",
+            "default_value": "andline_ts",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Timescale username",
+            "description": "TimescaleDB database user.",
+            "env_variable": "TIMESCALE_USERNAME",
+            "default_value": "andline",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Timescale password",
+            "description": "TimescaleDB database password.",
+            "env_variable": "TIMESCALE_PASSWORD",
+            "default_value": "",
+            "user_viewable": false,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Timescale SSL mode",
+            "description": "PostgreSQL sslmode for the timeseries connection.",
+            "env_variable": "TIMESCALE_SSLMODE",
+            "default_value": "prefer",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "AndBridge gateway",
+            "description": "Start the Node.js gateway from /home/container/www/server.",
+            "env_variable": "WS_ENABLED",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "AndBridge gateway port",
+            "description": "Internal localhost-only AndBridge gateway port.",
+            "env_variable": "ANDBRIDGE_GATEWAY_PORT",
+            "default_value": "9443",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:5",
+            "field_type": "text"
+        },
+        {
+            "name": "AndBridge gateway path",
+            "description": "WebSocket path proxied by Nginx.",
+            "env_variable": "ANDBRIDGE_GATEWAY_PATH",
+            "default_value": "/bridge",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "AndBridge gateway secret",
+            "description": "Shared secret used between the Node gateway and Laravel internal API.",
+            "env_variable": "ANDBRIDGE_GATEWAY_SECRET",
+            "default_value": "change-me-andbridge-secret-xx",
+            "user_viewable": false,
+            "user_editable": true,
+            "rules": "required|string|min:24",
+            "field_type": "text"
+        },
+        {
+            "name": "AndBridge public WSS URL",
+            "description": "Public URL configured in Laravel/plugin, for example wss://play.example.com/bridge.",
+            "env_variable": "ANDBRIDGE_WSS_URL",
+            "default_value": "wss://localhost/bridge",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "AndBridge collision mode",
+            "description": "Gateway session collision policy.",
+            "env_variable": "ANDBRIDGE_COLLISION_MODE",
+            "default_value": "LAST_WINS",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Queue worker",
+            "description": "Start Laravel database queue worker.",
+            "env_variable": "QUEUE_ENABLED",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Scheduler",
+            "description": "Start Laravel schedule:work.",
+            "env_variable": "SCHEDULER_ENABLED",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Newt enabled",
+            "description": "Start Newt userspace tunnel client for Pangolin.",
+            "env_variable": "NEWT_ENABLED",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Pangolin endpoint",
+            "description": "Pangolin URL, for example https://pangolin.example.com.",
+            "env_variable": "PANGOLIN_ENDPOINT",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Newt ID",
+            "description": "Newt site ID issued by Pangolin.",
+            "env_variable": "NEWT_ID",
+            "default_value": "",
+            "user_viewable": false,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Newt secret",
+            "description": "Newt site secret issued by Pangolin.",
+            "env_variable": "NEWT_SECRET",
+            "default_value": "",
+            "user_viewable": false,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        }
+    ]
+}
