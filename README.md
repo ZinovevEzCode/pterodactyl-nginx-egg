@@ -240,6 +240,58 @@ Nginx preserves an incoming `X-Forwarded-Proto` from Pangolin/Newt. This matters
 
 Laravel also receives the forwarded HTTPS scheme through FastCGI.
 
+## Egg import HTTP 500
+
+The included `egg-andline.json` follows Pterodactyl `PTDL_v2` structure and is checked by `scripts/validate-egg.py`.
+
+If Pterodactyl 1.12.1 still returns HTTP 500 while importing a valid egg, check the Panel itself. A known Panel issue occurs when `APP_SERVICE_AUTHOR` is missing from the Panel `.env`.
+
+On the Pterodactyl Panel host:
+
+```env
+APP_SERVICE_AUTHOR=admin@example.com
+```
+
+Then rebuild Laravel config cache:
+
+```bash
+cd /var/www/pterodactyl
+php artisan config:clear
+php artisan config:cache
+```
+
+Use a real email address. This is a Panel configuration issue, not an egg runtime variable.
+
+## ANDLINE compatibility contract
+
+This runtime is tested against the site repository layout:
+
+```text
+andline/
+├── artisan
+├── composer.json
+├── package.json
+├── webpack.mix.js
+├── admin/
+│   ├── package.json
+│   └── webpack.mix.js
+└── server/
+    ├── package.json
+    └── src/index.js
+```
+
+Expected build/runtime behavior:
+
+- root frontend: `npm ci && npm run prod`;
+- admin frontend: `cd admin && npm ci && npm run prod`;
+- admin assets: `public/assets/admin`;
+- AndBridge gateway: `node server/src/index.js`;
+- gateway endpoint: `/bridge` on internal `127.0.0.1:9443`;
+- public/admin HTTP traffic goes through Laravel and Nginx;
+- MariaDB/MySQL is the primary business database;
+- TimescaleDB is a second PostgreSQL connection;
+- Newt/Pangolin is optional and starts after the local stack.
+
 ## Pterodactyl
 
 Import:
