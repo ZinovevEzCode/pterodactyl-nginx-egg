@@ -51,6 +51,7 @@ jobs:
           build-args: |
             PHP_VERSION=8.5
             NODE_MAJOR=24
+            NEWT_VERSION=1.18.1
           tags: |
             ghcr.io/${{ env.IMAGE_NAME }}:andline
             ghcr.io/${{ env.IMAGE_NAME }}:8.5-andline
