@@ -12,6 +12,10 @@ on:
 env:
   REGISTRY: ghcr.io
 
+concurrency:
+  group: andline-runtime-main
+  cancel-in-progress: true
+
 jobs:
   validate-egg:
     runs-on: ubuntu-latest
