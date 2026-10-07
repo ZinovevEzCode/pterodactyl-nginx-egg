@@ -84,7 +84,11 @@ composer_install() {
     $file = $argv[1];
     $out = $argv[2];
     $json = json_decode(file_get_contents($file), true, 512, JSON_THROW_ON_ERROR);
-    unset($json["repositories"]);
+    $json["require"]["backpack/crud"] = "dev-v8 as 8.0.0";
+    $json["repositories"] = [[
+        "type" => "vcs",
+        "url" => "https://github.com/Laravel-Backpack/CRUD.git"
+    ]];
     file_put_contents($out, json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL);
   ' "$APP_DIR/composer.json" "$prod_json"
 
