@@ -16,7 +16,7 @@ mkdir -p   /home/container/runtime/nginx   /home/container/tmp/nginx/client_temp
 
 envsubst '$SERVER_PORT $APP_DIR $ANDBRIDGE_GATEWAY_PORT $ANDBRIDGE_GATEWAY_PATH'   < /opt/andline/nginx/andline.conf.template   > /home/container/runtime/nginx/andline.conf
 
-nginx -t -c /opt/andline/nginx/nginx.conf
+/usr/sbin/nginx -t -c /opt/andline/nginx/nginx.conf
 php-fpm-runtime -tt --fpm-config /opt/andline/php/php-fpm.conf
 
 echo "[ANDLINE] Services successfully launched"
