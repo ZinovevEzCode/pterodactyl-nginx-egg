@@ -33,8 +33,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -m -d /home/container -s /bin/bash container \
-    && mkdir -p /home/container/www /home/container/logs/{nginx,php,node,laravel,build} \
-       /home/container/runtime/nginx /home/container/tmp/nginx/{client_temp,proxy_temp,fastcgi_temp} \
+    && mkdir -p /home/container/www /home/container/logs/nginx /home/container/logs/php /home/container/logs/node \
+       /home/container/logs/laravel /home/container/logs/build \
+       /home/container/runtime/nginx \
+       /home/container/tmp/nginx/client_temp /home/container/tmp/nginx/proxy_temp \
+       /home/container/tmp/nginx/fastcgi_temp \
     && chown -R container:container /home/container
 
 COPY nginx/nginx.conf /opt/andline/nginx/nginx.conf
