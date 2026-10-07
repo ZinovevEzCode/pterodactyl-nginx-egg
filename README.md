@@ -113,3 +113,6 @@ Newt встроен в Docker image и работает в userspace-режим�
 Health-файл Newt по умолчанию: `/home/container/runtime/newt/healthy`.
 
 > Upstream Newt постепенно заменяется Pangolin CLI (`pangolin site up`). Runtime пока фиксирует Newt 1.18.1, чтобы деплой был воспроизводимым.
+
+
+CI: ANDLINE runtime build enabled.
