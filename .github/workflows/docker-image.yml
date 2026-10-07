@@ -3,7 +3,6 @@ name: Build ANDLINE runtime
 on:
   push:
     branches:
-      - main
       - andline-runtime
   pull_request:
     branches:
@@ -55,5 +54,6 @@ jobs:
           tags: |
             ghcr.io/${{ env.IMAGE_NAME }}:andline
             ghcr.io/${{ env.IMAGE_NAME }}:8.5-andline
+            ghcr.io/${{ env.IMAGE_NAME }}:andline-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
