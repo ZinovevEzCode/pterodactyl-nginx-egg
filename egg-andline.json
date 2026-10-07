@@ -7,7 +7,7 @@
   "exported_at": "2026-10-07T00:00:00+00:00",
   "name": "ANDLINE Laravel Vue Node",
   "author": "ZinovevEzCode",
-  "description": "Production runtime: Laravel + Vue/Webpack + separate /admin build + Node.js WebSocket, Supervisor, Git deploy, MySQL/MariaDB + PostgreSQL/TimescaleDB drivers and isolated logs.",
+  "description": "Production runtime: Laravel + Vue/Webpack + /admin + Node.js WebSocket + Newt/Pangolin, Supervisor, Git deploy, MySQL/MariaDB + PostgreSQL/TimescaleDB drivers and isolated logs.",
   "features": null,
   "docker_images": {
     "ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline": "ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline"
@@ -204,6 +204,46 @@
       "env_variable": "ADMIN_BUILD_COMMAND",
       "default_value": "",
       "user_viewable": true,
+      "user_editable": true,
+      "rules": "nullable|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Newt enabled",
+      "description": "Start Newt userspace tunnel client for Pangolin.",
+      "env_variable": "NEWT_ENABLED",
+      "default_value": "0",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|boolean",
+      "field_type": "text"
+    },
+    {
+      "name": "Pangolin endpoint",
+      "description": "Pangolin URL, for example https://pangolin.example.com.",
+      "env_variable": "PANGOLIN_ENDPOINT",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "nullable|url",
+      "field_type": "text"
+    },
+    {
+      "name": "Newt ID",
+      "description": "Newt site ID issued by Pangolin.",
+      "env_variable": "NEWT_ID",
+      "default_value": "",
+      "user_viewable": false,
+      "user_editable": true,
+      "rules": "nullable|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Newt secret",
+      "description": "Newt site secret issued by Pangolin.",
+      "env_variable": "NEWT_SECRET",
+      "default_value": "",
+      "user_viewable": false,
       "user_editable": true,
       "rules": "nullable|string",
       "field_type": "text"
