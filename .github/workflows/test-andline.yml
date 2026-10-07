@@ -50,7 +50,7 @@ jobs:
             node --version
             npm --version
             composer --version
-            nginx -v
+            /usr/sbin/nginx -v
             supervisord --version
             newt --version || newt --help >/dev/null
             bash -n /entrypoint.sh
