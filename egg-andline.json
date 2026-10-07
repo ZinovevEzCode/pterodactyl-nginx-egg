@@ -1,0 +1,212 @@
+{
+  "_comment": "ANDLINE Pterodactyl Egg",
+  "meta": {
+    "version": "PTDL_v2",
+    "update_url": null
+  },
+  "exported_at": "2026-10-07T00:00:00+00:00",
+  "name": "ANDLINE Laravel Vue Node",
+  "author": "ZinovevEzCode",
+  "description": "Production runtime: Laravel + Vue/Webpack + separate /admin build + Node.js WebSocket, Supervisor, Git deploy, MySQL/MariaDB + PostgreSQL/TimescaleDB drivers and isolated logs.",
+  "features": null,
+  "docker_images": {
+    "ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline": "ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline"
+  },
+  "file_denylist": [],
+  "startup": "/entrypoint.sh",
+  "config": {
+    "files": "{}",
+    "startup": "{\"done\":\"Services successfully launched\"}",
+    "logs": "{\"location\":\"logs/entrypoint.log\"}",
+    "stop": "^C"
+  },
+  "scripts": {
+    "installation": {
+      "script": "#!/bin/bash\nset -e\nmkdir -p /mnt/server/www /mnt/server/logs /mnt/server/tmp\necho '[ANDLINE] Runtime directories created. App clone/update happens at runtime startup.'\n",
+      "container": "debian:bookworm-slim",
+      "entrypoint": "bash"
+    }
+  },
+  "variables": [
+    {
+      "name": "Git repository",
+      "description": "HTTPS Git repository for ANDLINE application.",
+      "env_variable": "GIT_ADDRESS",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "nullable|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Git branch",
+      "description": "Application branch to deploy.",
+      "env_variable": "GIT_BRANCH",
+      "default_value": "main",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Git token",
+      "description": "Token for private Git repository.",
+      "env_variable": "GIT_TOKEN",
+      "default_value": "",
+      "user_viewable": false,
+      "user_editable": true,
+      "rules": "nullable|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Auto pull",
+      "description": "Update from origin/GIT_BRANCH on every container start.",
+      "env_variable": "AUTO_PULL",
+      "default_value": "1",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|boolean",
+      "field_type": "text"
+    },
+    {
+      "name": "Force build",
+      "description": "Force Composer/npm rebuild even when commit is unchanged.",
+      "env_variable": "FORCE_BUILD",
+      "default_value": "0",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|boolean",
+      "field_type": "text"
+    },
+    {
+      "name": "Run migrations",
+      "description": "Run php artisan migrate --force after new revision.",
+      "env_variable": "RUN_MIGRATIONS",
+      "default_value": "1",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|boolean",
+      "field_type": "text"
+    },
+    {
+      "name": "Laravel optimize",
+      "description": "Run php artisan optimize after deploy.",
+      "env_variable": "LARAVEL_OPTIMIZE",
+      "default_value": "1",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|boolean",
+      "field_type": "text"
+    },
+    {
+      "name": "Admin directory",
+      "description": "Separate admin Vue application directory.",
+      "env_variable": "ADMIN_DIR",
+      "default_value": "/home/container/www/admin",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Admin dist directory",
+      "description": "Built admin assets directory.",
+      "env_variable": "ADMIN_DIST_DIR",
+      "default_value": "/home/container/www/admin/dist",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string",
+      "field_type": "text"
+    },
+    {
+      "name": "WebSocket directory",
+      "description": "Node.js WebSocket application directory.",
+      "env_variable": "WS_DIR",
+      "default_value": "/home/container/www/nodejs",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string",
+      "field_type": "text"
+    },
+    {
+      "name": "WebSocket enabled",
+      "description": "Start Node.js WebSocket process.",
+      "env_variable": "WS_ENABLED",
+      "default_value": "1",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|boolean",
+      "field_type": "text"
+    },
+    {
+      "name": "WebSocket port",
+      "description": "Internal localhost port for Node.js WebSocket.",
+      "env_variable": "WS_PORT",
+      "default_value": "3000",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|integer|min:1024|max:65535",
+      "field_type": "text"
+    },
+    {
+      "name": "WebSocket public path",
+      "description": "Nginx path proxied to Node.js WebSocket.",
+      "env_variable": "WS_PUBLIC_PATH",
+      "default_value": "/nodejs",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string",
+      "field_type": "text"
+    },
+    {
+      "name": "WebSocket start command",
+      "description": "Command executed inside WS_DIR.",
+      "env_variable": "WS_START_COMMAND",
+      "default_value": "npm start",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Queue worker",
+      "description": "Start Laravel queue:work.",
+      "env_variable": "QUEUE_ENABLED",
+      "default_value": "1",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|boolean",
+      "field_type": "text"
+    },
+    {
+      "name": "Scheduler",
+      "description": "Start Laravel schedule:work.",
+      "env_variable": "SCHEDULER_ENABLED",
+      "default_value": "1",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|boolean",
+      "field_type": "text"
+    },
+    {
+      "name": "Root build command",
+      "description": "Optional explicit root npm build command.",
+      "env_variable": "ROOT_BUILD_COMMAND",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "nullable|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Admin build command",
+      "description": "Optional explicit /admin npm build command.",
+      "env_variable": "ADMIN_BUILD_COMMAND",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "nullable|string",
+      "field_type": "text"
+    }
+  ]
+}
