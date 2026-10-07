@@ -128,6 +128,31 @@ composer_install() {
   return "$code"
 }
 
+prepare_build_outputs_for_sync() {
+  local paths=(public/assets/js public/assets/css public/mix-manifest.json admin/dist)
+  local backup_dir="$LOG_DIR/build-backups/$(date -u +%Y%m%dT%H%M%SZ)-$"
+  local file
+  local tracked=()
+  local untracked=()
+
+  mapfile -d '' -t tracked < <(git ls-files -z -- "${paths[@]}")
+  mapfile -d '' -t untracked < <(git ls-files --others --exclude-standard -z -- "${paths[@]}")
+
+  if [[ ${#tracked[@]} -gt 0 ]] && ! git diff --quiet HEAD -- "${tracked[@]}"; then
+    mkdir -p "$backup_dir"
+    git diff --binary HEAD -- "${tracked[@]}" > "$backup_dir/tracked-build.patch"
+    echo "[DEPLOY] Saved local build changes to $backup_dir/tracked-build.patch"
+    git restore --source=HEAD --staged --worktree -- "${tracked[@]}"
+  fi
+
+  # A locally generated chunk may become tracked in the incoming revision.
+  # Move only untracked build output aside; never clean the whole application.
+  for file in "${untracked[@]}"; do
+    mkdir -p "$backup_dir/untracked/$(dirname "$file")"
+    mv -- "$file" "$backup_dir/untracked/$file"
+  done
+}
+
 echo "[DEPLOY] Repository: $GIT_ADDRESS"
 echo "[DEPLOY] Branch: $GIT_BRANCH"
 
@@ -143,7 +168,8 @@ elif is_true "${AUTO_PULL:-1}"; then
   cd "$APP_DIR"
   echo "[DEPLOY] Syncing origin/$GIT_BRANCH."
   git_auth fetch --prune origin "$GIT_BRANCH"
-  # Discard previous build dirt on tracked assets so the tree matches origin.
+  # Restore generated output before checkout; otherwise checkout aborts first.
+  prepare_build_outputs_for_sync
   git checkout -B "$GIT_BRANCH" "origin/$GIT_BRANCH"
   git reset --hard "origin/$GIT_BRANCH"
 fi
