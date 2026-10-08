@@ -7,7 +7,7 @@
     "exported_at": "2026-10-07T00:00:00+00:00",
     "name": "ANDLINE Monolith",
     "author": "xypexxypex@list.ru",
-    "description": "Pterodactyl runtime tailored for ZinovevEzCode/andline: Laravel 13, Vue 3 + Laravel Mix, Materio admin build, AndBridge gateway on 127.0.0.1:9443. Public nginx proxies /bridge-admin and /bridge-live; the plugin path stays private. Queue, scheduler, local PostgreSQL 17 + TimescaleDB and optional Newt/Pangolin.",
+    "description": "Pterodactyl runtime tailored for ZinovevEzCode/andline: Laravel 13, Vue 3 + Laravel Mix, Materio admin build, AndBridge gateway on 127.0.0.1:9443. Public nginx proxies /ws/admin, /ws/site and /ws/player; /ws/plugin stays private. Queue, scheduler, local PostgreSQL 17 + TimescaleDB and optional Newt/Pangolin.",
     "features": null,
     "docker_images": {
         "ANDLINE PHP 8.5 / Node 24": "ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline"
@@ -339,10 +339,10 @@
             "field_type": "text"
         },
         {
-            "name": "AndBridge gateway path",
-            "description": "Private plugin WebSocket path on the Node gateway (not proxied by public nginx). Default /bridge-plugin.",
+            "name": "AndBridge plugin path",
+            "description": "Private plugin WebSocket path on the Node gateway. Nginx must not proxy it.",
             "env_variable": "ANDBRIDGE_GATEWAY_PATH",
-            "default_value": "/bridge-plugin",
+            "default_value": "/ws/plugin",
             "user_viewable": true,
             "user_editable": true,
             "rules": "required|string",
@@ -360,12 +360,72 @@
         },
         {
             "name": "AndBridge private WSS URL",
-            "description": "Private URL for the Minecraft plugin (VPN/Newt/localhost), for example ws://127.0.0.1:9443/bridge-plugin. Do not put the public site hostname here.",
+            "description": "Private URL for the Minecraft plugin (VPN/Newt/localhost). Do not put the public site hostname here.",
             "env_variable": "ANDBRIDGE_WSS_URL",
-            "default_value": "ws://127.0.0.1:9443/bridge-plugin",
+            "default_value": "ws://127.0.0.1:9443/ws/plugin",
             "user_viewable": true,
             "user_editable": true,
             "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "AndBridge admin path",
+            "description": "Admin browser WebSocket path. Nginx proxies this path only.",
+            "env_variable": "ANDBRIDGE_ADMIN_PATH",
+            "default_value": "/ws/admin",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "AndBridge site path",
+            "description": "Anonymous site WebSocket path. Nginx proxies this path only.",
+            "env_variable": "ANDBRIDGE_SITE_PATH",
+            "default_value": "/ws/site",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "AndBridge player path",
+            "description": "Logged-in player WebSocket path. Nginx proxies this path only.",
+            "env_variable": "ANDBRIDGE_PLAYER_PATH",
+            "default_value": "/ws/player",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "AndBridge admin WSS URL",
+            "description": "URL the admin browser opens. Leave empty to use APP_URL plus the admin path.",
+            "env_variable": "ANDBRIDGE_ADMIN_WS_URL",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "AndBridge site WSS URL",
+            "description": "URL the public site opens. Leave empty to use APP_URL plus the site path.",
+            "env_variable": "ANDBRIDGE_SITE_WS_URL",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "AndBridge player WSS URL",
+            "description": "URL a logged-in player browser opens. Leave empty to use APP_URL plus the player path.",
+            "env_variable": "ANDBRIDGE_PLAYER_WS_URL",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
             "field_type": "text"
         },
         {

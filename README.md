@@ -77,7 +77,10 @@ Runtime defaults:
 NODE_ENV=production
 ANDBRIDGE_GATEWAY_HOST=127.0.0.1
 ANDBRIDGE_GATEWAY_PORT=9443
-ANDBRIDGE_GATEWAY_PATH=/bridge
+ANDBRIDGE_GATEWAY_PATH=/ws/plugin
+ANDBRIDGE_ADMIN_PATH=/ws/admin
+ANDBRIDGE_SITE_PATH=/ws/site
+ANDBRIDGE_PLAYER_PATH=/ws/player
 ```
 
 Supervisor starts it directly with:
@@ -89,11 +92,12 @@ node src/index.js
 Nginx proxies the browser sockets to the gateway and leaves the plugin path private:
 
 ```text
-/bridge-admin -> 127.0.0.1:9443
-/bridge-live   -> 127.0.0.1:9443
+/ws/admin  -> 127.0.0.1:9443
+/ws/site   -> 127.0.0.1:9443
+/ws/player -> 127.0.0.1:9443
 ```
 
-`ANDBRIDGE_GATEWAY_PATH` (default `/bridge`) is not published. WebSocket read and send timeouts are 3600 seconds.
+`ANDBRIDGE_GATEWAY_PATH` (default `/ws/plugin`) is not published. A prefix `location /ws/` would publish it, so the three browser paths are separate locations. WebSocket read and send timeouts are 3600 seconds. Empty `ANDBRIDGE_ADMIN_WS_URL`, `ANDBRIDGE_SITE_WS_URL` and `ANDBRIDGE_PLAYER_WS_URL` are filled from `APP_URL` plus the matching path.
 
 The internal Laravel URL is generated automatically as:
 
@@ -224,8 +228,11 @@ AndBridge:
 ```env
 ANDBRIDGE_GATEWAY_SECRET=<long-random-secret>
 ANDBRIDGE_GATEWAY_PORT=9443
-ANDBRIDGE_GATEWAY_PATH=/bridge
-ANDBRIDGE_WSS_URL=wss://your-domain.example/bridge
+ANDBRIDGE_GATEWAY_PATH=/ws/plugin
+ANDBRIDGE_ADMIN_PATH=/ws/admin
+ANDBRIDGE_SITE_PATH=/ws/site
+ANDBRIDGE_PLAYER_PATH=/ws/player
+ANDBRIDGE_WSS_URL=ws://127.0.0.1:9443/ws/plugin
 ANDBRIDGE_COLLISION_MODE=LAST_WINS
 ```
 
@@ -290,7 +297,7 @@ Expected build/runtime behavior:
 - admin frontend: `cd admin && npm ci && npm run prod`;
 - admin assets: `public/assets/admin`;
 - AndBridge gateway: `node server/src/index.js`;
-- gateway endpoint: `/bridge` on internal `127.0.0.1:9443`;
+- gateway plugin endpoint: `/ws/plugin` on internal `127.0.0.1:9443`;
 - public/admin HTTP traffic goes through Laravel and Nginx;
 - MariaDB/MySQL is the primary business database;
 - TimescaleDB is a second PostgreSQL connection;
