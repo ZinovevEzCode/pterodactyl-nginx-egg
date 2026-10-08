@@ -16,7 +16,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     HOME=/home/container \
     APP_DIR=/home/container/www
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d && chmod +x /usr/sbin/policy-rc.d \
+    && apt-get update && apt-get install -y --no-install-recommends \
     bash ca-certificates curl git gnupg2 unzip nginx supervisor gettext-base procps tini \
     && mkdir -p /etc/apt/keyrings \
     && curl -fsSL https://packages.sury.org/php/apt.gpg | gpg --dearmor -o /etc/apt/keyrings/php-sury.gpg \
@@ -34,7 +35,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && curl -fsSL https://getcomposer.org/installer -o /tmp/composer-setup.php \
     && php /tmp/composer-setup.php --quiet --install-dir=/usr/local/bin --filename=composer \
     && rm -f /tmp/composer-setup.php \
-    && npm install -g npm@latest \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /etc/postgresql-common /etc/apt/keyrings \

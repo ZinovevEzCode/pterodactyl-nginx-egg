@@ -25,7 +25,6 @@ mkdir -p \
 envsubst '$SERVER_PORT $APP_DIR $ANDBRIDGE_GATEWAY_PORT'   < /opt/andline/nginx/andline.conf.template   > /home/container/runtime/nginx/andline.conf
 
 /usr/sbin/nginx -t -c /opt/andline/nginx/nginx.conf
-php-fpm-runtime -tt --fpm-config /opt/andline/php/php-fpm.conf
 
 echo "[ANDLINE] Services successfully launched"
 echo "[ANDLINE] HTTP :$SERVER_PORT"

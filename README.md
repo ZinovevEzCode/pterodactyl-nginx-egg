@@ -9,6 +9,7 @@ Production runtime, tailored specifically for the private repository `ZinovevEzC
 - Composer 2
 - Node.js 24 + npm
 - PostgreSQL 17 + TimescaleDB 2.30.2 OSS from the Timescale apt repository (not compiled during the image build)
+- Published image is `linux/amd64` only, so PHP packages are not installed a second time under QEMU
 - Supervisor
 - Newt 1.18.1 for Pangolin (optional)
 
