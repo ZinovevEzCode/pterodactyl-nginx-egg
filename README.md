@@ -85,13 +85,14 @@ Supervisor starts it directly with:
 node src/index.js
 ```
 
-Nginx proxies:
+Nginx proxies the browser sockets to the gateway and leaves the plugin path private:
 
 ```text
-/bridge -> 127.0.0.1:9443
+/bridge-admin -> 127.0.0.1:9443
+/bridge-live   -> 127.0.0.1:9443
 ```
 
-with 24-hour WebSocket read/send timeouts.
+`ANDBRIDGE_GATEWAY_PATH` (default `/bridge`) is not published. WebSocket read and send timeouts are 3600 seconds.
 
 The internal Laravel URL is generated automatically as:
 

@@ -12,9 +12,31 @@ server {
         return 200 "ok\n";
     }
 
-    # AndBridge plugin WSS is intentionally NOT proxied on the public HTTP port.
-    # Node listens on 127.0.0.1:${ANDBRIDGE_GATEWAY_PORT}${ANDBRIDGE_GATEWAY_PATH}
-    # for private / VPN / Newt access. Browsers use Laravel /api only.
+    # The plugin WSS path stays on 127.0.0.1 only.
+    # Browsers reach the admin ticket socket and the public online socket through nginx.
+    location /bridge-admin {
+        proxy_pass http://127.0.0.1:${ANDBRIDGE_GATEWAY_PORT};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $andline_forwarded_proto;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+    }
+
+    location /bridge-live {
+        proxy_pass http://127.0.0.1:${ANDBRIDGE_GATEWAY_PORT};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $andline_forwarded_proto;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+    }
 
     # Both public Vue SPA and /admin are Laravel Blade shells.
     # Built files are emitted under public/assets by Laravel Mix.

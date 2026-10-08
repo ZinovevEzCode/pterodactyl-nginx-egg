@@ -7,7 +7,7 @@
     "exported_at": "2026-10-07T00:00:00+00:00",
     "name": "ANDLINE Monolith",
     "author": "xypexxypex@list.ru",
-    "description": "Pterodactyl runtime tailored for ZinovevEzCode/andline: Laravel 13, Vue 3 + Laravel Mix, Materio admin build, private AndBridge gateway on 127.0.0.1:9443/bridge-plugin (not public nginx), queue/scheduler, local PostgreSQL 17 + TimescaleDB service and optional Newt/Pangolin.",
+    "description": "Pterodactyl runtime tailored for ZinovevEzCode/andline: Laravel 13, Vue 3 + Laravel Mix, Materio admin build, AndBridge gateway on 127.0.0.1:9443. Public nginx proxies /bridge-admin and /bridge-live; the plugin path stays private. Queue, scheduler, local PostgreSQL 17 + TimescaleDB and optional Newt/Pangolin.",
     "features": null,
     "docker_images": {
         "ANDLINE PHP 8.5 / Node 24": "ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline"
