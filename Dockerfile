@@ -37,18 +37,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && npm install -g npm@latest \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /etc/postgresql-common \
+RUN mkdir -p /etc/postgresql-common /etc/apt/keyrings \
     && echo 'create_main_cluster = false' > /etc/postgresql-common/createcluster.conf \
     && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg \
     && echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/postgresql.list \
+    && curl -fsSL https://packagecloud.io/timescale/timescaledb/gpgkey | gpg --dearmor -o /etc/apt/keyrings/timescaledb.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/timescaledb.gpg] https://packagecloud.io/timescale/timescaledb/debian/ bookworm main" > /etc/apt/sources.list.d/timescaledb.list \
     && apt-get update \
-    && apt-get install -y --no-install-recommends postgresql-${PG_MAJOR} postgresql-client-${PG_MAJOR} postgresql-server-dev-${PG_MAJOR} build-essential cmake libssl-dev \
-    && git clone --depth 1 --branch "${TIMESCALE_VERSION}" https://github.com/timescale/timescaledb.git /tmp/timescaledb \
-    && cd /tmp/timescaledb \
-    && ./bootstrap -DPG_CONFIG=/usr/lib/postgresql/${PG_MAJOR}/bin/pg_config -DREGRESS_CHECKS=OFF -DTAP_CHECKS=OFF -DWARNINGS_AS_ERRORS=OFF \
-    && cmake --build build --parallel 2 \
-    && cmake --install build \
-    && rm -rf /tmp/timescaledb /var/lib/apt/lists/*
+    && apt-get install -y --no-install-recommends \
+       postgresql-${PG_MAJOR} \
+       postgresql-client-${PG_MAJOR} \
+       timescaledb-2-oss-${TIMESCALE_VERSION}-postgresql-${PG_MAJOR} \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN set -eux; \
     arch="$(dpkg --print-architecture)"; \

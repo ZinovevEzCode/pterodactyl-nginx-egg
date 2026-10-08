@@ -8,7 +8,7 @@ Production runtime, tailored specifically for the private repository `ZinovevEzC
 - PHP 8.5 + PHP-FPM
 - Composer 2
 - Node.js 24 + npm
-- PostgreSQL 17 + TimescaleDB 2.30.2 (local persistent service)
+- PostgreSQL 17 + TimescaleDB 2.30.2 OSS from the Timescale apt repository (not compiled during the image build)
 - Supervisor
 - Newt 1.18.1 for Pangolin (optional)
 
