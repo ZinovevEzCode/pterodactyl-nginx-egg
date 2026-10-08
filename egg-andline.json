@@ -7,7 +7,7 @@
     "exported_at": "2026-10-07T00:00:00+00:00",
     "name": "ANDLINE Monolith",
     "author": "xypexxypex@list.ru",
-    "description": "Pterodactyl runtime tailored for ZinovevEzCode/andline: Laravel 13, Vue 3 + Laravel Mix, Materio admin build, AndBridge gateway on /bridge:9443, queue/scheduler, local PostgreSQL 17 + TimescaleDB service and optional Newt/Pangolin.",
+    "description": "Pterodactyl runtime tailored for ZinovevEzCode/andline: Laravel 13, Vue 3 + Laravel Mix, Materio admin build, private AndBridge gateway on 127.0.0.1:9443/bridge-plugin (not public nginx), queue/scheduler, local PostgreSQL 17 + TimescaleDB service and optional Newt/Pangolin.",
     "features": null,
     "docker_images": {
         "ANDLINE PHP 8.5 / Node 24": "ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline"
@@ -340,9 +340,9 @@
         },
         {
             "name": "AndBridge gateway path",
-            "description": "WebSocket path proxied by Nginx.",
+            "description": "Private plugin WebSocket path on the Node gateway (not proxied by public nginx). Default /bridge-plugin.",
             "env_variable": "ANDBRIDGE_GATEWAY_PATH",
-            "default_value": "/bridge",
+            "default_value": "/bridge-plugin",
             "user_viewable": true,
             "user_editable": true,
             "rules": "required|string",
@@ -359,10 +359,10 @@
             "field_type": "text"
         },
         {
-            "name": "AndBridge public WSS URL",
-            "description": "Public URL configured in Laravel/plugin, for example wss://play.example.com/bridge.",
+            "name": "AndBridge private WSS URL",
+            "description": "Private URL for the Minecraft plugin (VPN/Newt/localhost), for example ws://127.0.0.1:9443/bridge-plugin. Do not put the public site hostname here.",
             "env_variable": "ANDBRIDGE_WSS_URL",
-            "default_value": "wss://localhost/bridge",
+            "default_value": "ws://127.0.0.1:9443/bridge-plugin",
             "user_viewable": true,
             "user_editable": true,
             "rules": "required|string",
