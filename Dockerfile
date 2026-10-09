@@ -47,7 +47,7 @@ RUN mkdir -p /etc/postgresql-common /etc/apt/keyrings \
     && apt-get install -y --no-install-recommends \
        postgresql-${PG_MAJOR} \
        postgresql-client-${PG_MAJOR} \
-       timescaledb-2-oss-${TIMESCALE_VERSION}-postgresql-${PG_MAJOR} \
+       timescaledb-2-${TIMESCALE_VERSION}-postgresql-${PG_MAJOR} \
     && rm -rf /var/lib/apt/lists/*
 
 RUN set -eux; \
