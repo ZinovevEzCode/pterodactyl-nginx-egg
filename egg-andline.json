@@ -352,10 +352,10 @@
             "name": "AndBridge gateway secret",
             "description": "Shared secret used between the Node gateway and Laravel internal API.",
             "env_variable": "ANDBRIDGE_GATEWAY_SECRET",
-            "default_value": "change-me-andbridge-secret-xx",
+            "default_value": "",
             "user_viewable": false,
             "user_editable": true,
-            "rules": "required|string|min:24",
+            "rules": "required|string|min:32|not_regex:/change-me/i",
             "field_type": "text"
         },
         {

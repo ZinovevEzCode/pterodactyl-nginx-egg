@@ -23,6 +23,11 @@ if [[ -z "${ANDBRIDGE_GATEWAY_SECRET:-}" ]]; then
   echo "[ANDBRIDGE] ERROR: ANDBRIDGE_GATEWAY_SECRET is required."
   exit 30
 fi
+secret_lc="$(printf '%s' "$ANDBRIDGE_GATEWAY_SECRET" | tr '[:upper:]' '[:lower:]')"
+if [[ ${#ANDBRIDGE_GATEWAY_SECRET} -lt 24 || "$secret_lc" == change-me* || "$secret_lc" == *changeme* || "$secret_lc" == *secret-xx* ]]; then
+  echo "[ANDBRIDGE] ERROR: ANDBRIDGE_GATEWAY_SECRET is a weak placeholder. Set a unique secret (min 24 chars)."
+  exit 30
+fi
 
 if [[ ! -f "$GATEWAY_DIR/src/index.js" ]]; then
   echo "[ANDBRIDGE] ERROR: $GATEWAY_DIR/src/index.js not found."
