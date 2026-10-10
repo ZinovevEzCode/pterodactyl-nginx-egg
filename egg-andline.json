@@ -7,7 +7,7 @@
     "exported_at": "2026-10-07T00:00:00+00:00",
     "name": "ANDLINE Monolith",
     "author": "xypexxypex@list.ru",
-    "description": "Pterodactyl runtime tailored for ZinovevEzCode/andline: Laravel 13, Vue 3 + Laravel Mix, Materio admin build, AndBridge gateway on 127.0.0.1:9443. Public nginx proxies /ws/admin, /ws/site and /ws/player; /ws/plugin stays private. Queue, scheduler, local PostgreSQL 17 + TimescaleDB and optional Newt/Pangolin.",
+    "description": "Pterodactyl runtime tailored for ZinovevEzCode/andline: Laravel 13, Vue 3 + Laravel Mix, Materio admin build, Andline Agent gateway on 127.0.0.1:9443. Public nginx proxies /ws/admin, /ws/site and /ws/player; /ws/plugin stays private. Queue, scheduler, local PostgreSQL 17 + TimescaleDB and optional Newt/Pangolin.",
     "features": null,
     "docker_images": {
         "ANDLINE PHP 8.5 / Node 24": "ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline"
@@ -319,7 +319,7 @@
             "field_type": "text"
         },
         {
-            "name": "AndBridge gateway",
+            "name": "Andline Agent gateway",
             "description": "Start the Node.js gateway from /home/container/www/server.",
             "env_variable": "WS_ENABLED",
             "default_value": "1",
@@ -329,9 +329,9 @@
             "field_type": "text"
         },
         {
-            "name": "AndBridge gateway port",
-            "description": "Internal localhost-only AndBridge gateway port.",
-            "env_variable": "ANDBRIDGE_GATEWAY_PORT",
+            "name": "Andline Agent gateway port",
+            "description": "Internal localhost-only Andline Agent gateway port.",
+            "env_variable": "ANDLINE_AGENT_GATEWAY_PORT",
             "default_value": "9443",
             "user_viewable": true,
             "user_editable": true,
@@ -339,9 +339,9 @@
             "field_type": "text"
         },
         {
-            "name": "AndBridge plugin path",
+            "name": "Andline Agent plugin path",
             "description": "Private plugin WebSocket path on the Node gateway. Nginx must not proxy it.",
-            "env_variable": "ANDBRIDGE_GATEWAY_PATH",
+            "env_variable": "ANDLINE_AGENT_GATEWAY_PATH",
             "default_value": "/ws/plugin",
             "user_viewable": true,
             "user_editable": true,
@@ -349,9 +349,9 @@
             "field_type": "text"
         },
         {
-            "name": "AndBridge gateway secret",
+            "name": "Andline Agent gateway secret",
             "description": "Shared secret used between the Node gateway and Laravel internal API.",
-            "env_variable": "ANDBRIDGE_GATEWAY_SECRET",
+            "env_variable": "ANDLINE_AGENT_GATEWAY_SECRET",
             "default_value": "",
             "user_viewable": false,
             "user_editable": true,
@@ -359,9 +359,9 @@
             "field_type": "text"
         },
         {
-            "name": "AndBridge private WSS URL",
+            "name": "Andline Agent private WSS URL",
             "description": "Private URL for the Minecraft plugin (VPN/Newt/localhost). Do not put the public site hostname here.",
-            "env_variable": "ANDBRIDGE_WSS_URL",
+            "env_variable": "ANDLINE_AGENT_WSS_URL",
             "default_value": "ws://127.0.0.1:9443/ws/plugin",
             "user_viewable": true,
             "user_editable": true,
@@ -369,9 +369,9 @@
             "field_type": "text"
         },
         {
-            "name": "AndBridge admin path",
+            "name": "Andline Agent admin path",
             "description": "Admin browser WebSocket path. Nginx proxies this path only.",
-            "env_variable": "ANDBRIDGE_ADMIN_PATH",
+            "env_variable": "ANDLINE_AGENT_ADMIN_PATH",
             "default_value": "/ws/admin",
             "user_viewable": true,
             "user_editable": true,
@@ -379,9 +379,9 @@
             "field_type": "text"
         },
         {
-            "name": "AndBridge site path",
+            "name": "Andline Agent site path",
             "description": "Anonymous site WebSocket path. Nginx proxies this path only.",
-            "env_variable": "ANDBRIDGE_SITE_PATH",
+            "env_variable": "ANDLINE_AGENT_SITE_PATH",
             "default_value": "/ws/site",
             "user_viewable": true,
             "user_editable": true,
@@ -389,9 +389,9 @@
             "field_type": "text"
         },
         {
-            "name": "AndBridge player path",
+            "name": "Andline Agent player path",
             "description": "Logged-in player WebSocket path. Nginx proxies this path only.",
-            "env_variable": "ANDBRIDGE_PLAYER_PATH",
+            "env_variable": "ANDLINE_AGENT_PLAYER_PATH",
             "default_value": "/ws/player",
             "user_viewable": true,
             "user_editable": true,
@@ -399,9 +399,9 @@
             "field_type": "text"
         },
         {
-            "name": "AndBridge admin WSS URL",
+            "name": "Andline Agent admin WSS URL",
             "description": "URL the admin browser opens. Leave empty to use APP_URL plus the admin path.",
-            "env_variable": "ANDBRIDGE_ADMIN_WS_URL",
+            "env_variable": "ANDLINE_AGENT_ADMIN_WS_URL",
             "default_value": "",
             "user_viewable": true,
             "user_editable": true,
@@ -409,9 +409,9 @@
             "field_type": "text"
         },
         {
-            "name": "AndBridge site WSS URL",
+            "name": "Andline Agent site WSS URL",
             "description": "URL the public site opens. Leave empty to use APP_URL plus the site path.",
-            "env_variable": "ANDBRIDGE_SITE_WS_URL",
+            "env_variable": "ANDLINE_AGENT_SITE_WS_URL",
             "default_value": "",
             "user_viewable": true,
             "user_editable": true,
@@ -419,9 +419,9 @@
             "field_type": "text"
         },
         {
-            "name": "AndBridge player WSS URL",
+            "name": "Andline Agent player WSS URL",
             "description": "URL a logged-in player browser opens. Leave empty to use APP_URL plus the player path.",
-            "env_variable": "ANDBRIDGE_PLAYER_WS_URL",
+            "env_variable": "ANDLINE_AGENT_PLAYER_WS_URL",
             "default_value": "",
             "user_viewable": true,
             "user_editable": true,
@@ -429,9 +429,9 @@
             "field_type": "text"
         },
         {
-            "name": "AndBridge collision mode",
+            "name": "Andline Agent collision mode",
             "description": "Gateway session collision policy.",
-            "env_variable": "ANDBRIDGE_COLLISION_MODE",
+            "env_variable": "ANDLINE_AGENT_COLLISION_MODE",
             "default_value": "LAST_WINS",
             "user_viewable": true,
             "user_editable": true,
