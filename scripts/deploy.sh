@@ -77,55 +77,17 @@ npm_build() {
 
 composer_install() {
   local composer_log="$LOG_DIR/build/composer.log"
-
   if [[ -n "${GIT_TOKEN:-}" ]]; then
     export COMPOSER_AUTH="{\"github-oauth\":{\"github.com\":\"${GIT_TOKEN}\"}}"
   fi
 
-  echo "[BUILD][composer] composer install"
-  if run_logged "$composer_log" bash -lc "cd '$APP_DIR' && composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader"; then
-    return 0
-  fi
-
-  if ! is_true "${COMPOSER_PATH_FALLBACK:-1}"; then
-    echo "[BUILD][composer] install failed and COMPOSER_PATH_FALLBACK=0"
+  # Install exactly the dependencies locked in Git, without generating a
+  # different dependency tree at deployment time.
+  [[ -f "$APP_DIR/composer.lock" ]] || {
+    echo "[BUILD][composer] composer.lock missing; refuse non-reproducible production install."
     return 1
-  fi
-
-  if ! grep -q '"type": "path"' "$APP_DIR/composer.lock" 2>/dev/null; then
-    echo "[BUILD][composer] install failed for a reason unrelated to path repositories"
-    return 1
-  fi
-
-  echo "[BUILD][composer] WARNING: composer.lock contains local Windows path packages."
-  echo "[BUILD][composer] Falling back to public Composer repositories for this deployment."
-
-  local prod_json="$APP_DIR/composer.pterodactyl.json"
-  local prod_lock="$APP_DIR/composer.pterodactyl.lock"
-
-  php -r '
-    $file = $argv[1];
-    $out = $argv[2];
-    $json = json_decode(file_get_contents($file), true, 512, JSON_THROW_ON_ERROR);
-    $json["require"]["backpack/crud"] = "dev-v8 as 8.0.0";
-    $json["repositories"] = [[
-        "type" => "vcs",
-        "url" => "https://github.com/Laravel-Backpack/CRUD.git"
-    ]];
-    file_put_contents($out, json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL);
-  ' "$APP_DIR/composer.json" "$prod_json"
-
-  set +e
-  (
-    cd "$APP_DIR"
-    COMPOSER="composer.pterodactyl.json" composer update       --no-dev       --prefer-dist       --no-interaction       --optimize-autoloader       --with-all-dependencies
-  ) 2>&1 | tee -a "$composer_log"
-  local code=${PIPESTATUS[0]}
-  set -e
-
-  rm -f "$prod_json" "$prod_lock"
-
-  return "$code"
+  }
+  run_logged "$composer_log" bash -lc "cd '$APP_DIR' && composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader"
 }
 
 prepare_build_outputs_for_sync() {
@@ -199,13 +161,13 @@ if [[ "$NEEDS_BUILD" -eq 1 ]]; then
   composer_install
 
   if is_true "${BUILD_FRONTEND:-1}"; then
-    npm_build "$APP_DIR" "frontend" "${ROOT_BUILD_COMMAND:-npm run prod}"
+    npm_build "$APP_DIR" "frontend" "npm run prod"
   else
     echo "[BUILD][frontend] skipped (BUILD_FRONTEND=0)"
   fi
 
   if is_true "${BUILD_ADMIN:-1}"; then
-    npm_build "$ADMIN_DIR" "admin" "${ADMIN_BUILD_COMMAND:-npm run prod}"
+    npm_build "$ADMIN_DIR" "admin" "npm run prod"
   else
     echo "[BUILD][admin] skipped (BUILD_ADMIN=0)"
   fi
