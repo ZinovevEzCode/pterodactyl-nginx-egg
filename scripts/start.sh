@@ -7,7 +7,6 @@ export LOG_DIR="${LOG_DIR:-/home/container/logs}"
 
 # Единые имена переменных EGG. Три браузерных namespace используют /ws/site.
 export ANDLINE_AGENT_GATEWAY_PORT="${ANDLINE_AGENT_GATEWAY_PORT:-9443}"
-export ANDLINE_AGENT_GATEWAY_PATH="${ANDLINE_AGENT_GATEWAY_PATH:-/ws/plugin}"
 export ANDLINE_AGENT_PLUGIN_IO_PATH="${ANDLINE_AGENT_PLUGIN_IO_PATH:-/ws/plugin-io}"
 export ANDLINE_AGENT_SITE_PATH="${ANDLINE_AGENT_SITE_PATH:-/ws/site}"
 
@@ -19,7 +18,7 @@ mkdir -p \
   /home/container/tmp/nginx/scgi_temp \
   "$LOG_DIR/nginx" "$LOG_DIR/php" "$LOG_DIR/node" "$LOG_DIR/laravel" "$LOG_DIR/newt"
 
-# Both private plugin paths remain inaccessible via the public nginx vhost.
+# The private plugin path remain inaccessible via the public nginx vhost.
 envsubst '$SERVER_PORT $APP_DIR $ANDLINE_AGENT_GATEWAY_PORT $ANDLINE_AGENT_SITE_PATH' \
   < /opt/andline/nginx/andline.conf.template \
   > /home/container/runtime/nginx/andline.conf
@@ -28,7 +27,6 @@ envsubst '$SERVER_PORT $APP_DIR $ANDLINE_AGENT_GATEWAY_PORT $ANDLINE_AGENT_SITE_
 
 echo "[ANDLINE] Services successfully launched"
 echo "[ANDLINE] HTTP :$SERVER_PORT"
-echo "[ANDLINE] Agent private WSS 127.0.0.1:$ANDLINE_AGENT_GATEWAY_PORT$ANDLINE_AGENT_GATEWAY_PATH"
 echo "[ANDLINE] Public Socket.IO $ANDLINE_AGENT_SITE_PATH -> 127.0.0.1:$ANDLINE_AGENT_GATEWAY_PORT"
 echo "[ANDLINE] Private Socket.IO $ANDLINE_AGENT_PLUGIN_IO_PATH (not public)"
 
