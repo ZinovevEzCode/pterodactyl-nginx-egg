@@ -56,13 +56,13 @@ for i, variable in enumerate(data.get("variables") or []):
 # Engine.IO path, and no obsolete aliases exported from the panel.
 required = {
     "ANDLINE_AGENT_ENABLED", "ANDLINE_AGENT_GATEWAY_PORT",
-    "ANDLINE_AGENT_GATEWAY_SECRET", "ANDLINE_AGENT_GATEWAY_PATH",
+    "ANDLINE_AGENT_GATEWAY_SECRET",
     "ANDLINE_AGENT_PLUGIN_IO_PATH", "ANDLINE_AGENT_SITE_PATH",
     "TIMESCALE_ENABLED", "TIMESCALE_PORT",
 }
 need(required.issubset(seen), "missing required canonical Andline variables: " + ", ".join(sorted(required - seen)))
 obsolete = {
-    "WS_ENABLED", "TIMESCALE_DB_PORT",
+    "WS_ENABLED", "TIMESCALE_DB_PORT", "ANDLINE_AGENT_GATEWAY_PATH",
     "ANDLINE_AGENT_ADMIN_PATH", "ANDLINE_AGENT_PLAYER_PATH",
     "ANDLINE_AGENT_ADMIN_WS_URL", "ANDLINE_AGENT_SITE_WS_URL",
     "ANDLINE_AGENT_PLAYER_WS_URL", "COMPOSER_PATH_FALLBACK",

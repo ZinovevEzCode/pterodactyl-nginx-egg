@@ -7,7 +7,7 @@
   "exported_at": "2026-10-07T00:00:00+00:00",
   "name": "ANDLINE Monolith",
   "author": "xypexxypex@list.ru",
-  "description": "ANDLINE: PHP 8.5 / Laravel, Vue/Mix, Node.js 24 Socket.IO Gateway, MariaDB + локальный/внешний TimescaleDB, Newt. Один публичный /ws/site; приватный /ws/plugin-io и временный legacy /ws/plugin. Без ANDBRIDGE_* алиасов.",
+  "description": "ANDLINE: PHP 8.5 / Laravel, Vue/Mix, Node.js 24 Socket.IO Gateway, MariaDB + TimescaleDB, Newt. Публичный /ws/site и приватный /ws/plugin-io. RAW WebSocket плагинов отключён.",
   "features": null,
   "docker_images": {
     "ANDLINE PHP 8.5 / Node 24": "ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline"
@@ -309,16 +309,6 @@
       "field_type": "text"
     },
     {
-      "name": "Gateway · Legacy WebSocket путь",
-      "description": "Только для старых JAR. Оставить /ws/plugin до полного обновления серверов; nginx не публикует путь.",
-      "env_variable": "ANDLINE_AGENT_GATEWAY_PATH",
-      "default_value": "/ws/plugin",
-      "user_viewable": true,
-      "user_editable": true,
-      "rules": "required|string",
-      "field_type": "text"
-    },
-    {
       "name": "Socket.IO · Приватный путь",
       "description": "Engine.IO путь Minecraft-плагинов; namespace /plugin. Не публиковать в публичном nginx.",
       "env_variable": "ANDLINE_AGENT_PLUGIN_IO_PATH",
@@ -340,9 +330,9 @@
     },
     {
       "name": "Minecraft · Приватный адрес",
-      "description": "Приватный WSS URL для Minecraft-клиентов. Старые /ws/plugin URL автоматически преобразуются в Socket.IO клиентами; внешние клиенты обязаны использовать TLS через приватный доступ.",
+      "description": "Socket.IO Engine.IO endpoint Minecraft-плагинов. Только /ws/plugin-io, namespace /plugin; удалённым серверам нужен приватный WSS TLS.",
       "env_variable": "ANDLINE_AGENT_WSS_URL",
-      "default_value": "ws://127.0.0.1:9443/ws/plugin",
+      "default_value": "ws://127.0.0.1:9443/ws/plugin-io",
       "user_viewable": true,
       "user_editable": true,
       "rules": "required|string",

@@ -14,11 +14,10 @@
 | HTTP сайта | Pterodactyl SERVER_PORT | Публичный nginx |
 | Socket.IO сайта/ЛК/админки | `/ws/site` | Публичный nginx |
 | Socket.IO Minecraft-плагинов | `/ws/plugin-io/`, namespace `/plugin` | **Только приватный Gateway** |
-| Legacy WebSocket старых JAR | `/ws/plugin` | **Только приватный Gateway** |
 | Node Gateway | `127.0.0.1:9443` | Только контейнер |
 | Локальный TimescaleDB | `127.0.0.1:5432` | Только контейнер |
 
-У сайта три пространства имён Socket.IO на одном Engine.IO endpoint: `/` (публичный онлайн), `/admin` (админка), `/player` (уведомления). Отдельные `/ws/admin` и `/ws/player` удалены. В nginx явно закрыто всё, что начинается на `/ws/plugin`.
+У сайта три пространства имён Socket.IO на одном Engine.IO endpoint: `/` (публичный онлайн), `/admin` (админка), `/player` (уведомления). Отдельные `/ws/admin` и `/ws/player` удалены. В nginx закрыт весь префикс `/ws/`, кроме точного публичного `/ws/site`.
 
 Для удалённых Minecraft-серверов нужен **частный TLS endpoint** (VPN / защищённый tunnel / приватный reverse proxy). Не открывайте `/ws/plugin-io` в публичном веб-домене.
 
@@ -36,7 +35,6 @@
 | `ANDLINE_AGENT_ENABLED` | Включает Node Gateway |
 | `ANDLINE_AGENT_GATEWAY_PORT` | Внутренний порт Gateway, по умолчанию 9443 |
 | `ANDLINE_AGENT_GATEWAY_SECRET` | Общий случайный секрет Laravel/Node (≥32 символа) |
-| `ANDLINE_AGENT_GATEWAY_PATH` | Legacy `/ws/plugin` (для ещё не обновлённых JAR) |
 | `ANDLINE_AGENT_PLUGIN_IO_PATH` | Приватный Socket.IO `/ws/plugin-io` |
 | `ANDLINE_AGENT_SITE_PATH` | Публичный Socket.IO `/ws/site` |
 | `ANDLINE_AGENT_WSS_URL` | Minecraft plugin URL через приватный маршрут |
@@ -53,7 +51,7 @@
 1. Установите и проверьте совместимую версию `andline` со свежими `ANDLINE_AGENT_*` переменными и единым `/ws/site`.
 2. Импортируйте `egg-andline.json` в Pterodactyl, обновите привязку сервера к новой версии EGG и заполните переменные.
 3. Убедитесь, что у контейнера есть `ANDLINE_AGENT_GATEWAY_SECRET` длиной не менее 32 символов и правильный HTTPS `APP_URL`.
-4. Обновите Paper Agent и оба Bungee Bridge JAR. Legacy WebSocket `/ws/plugin` остаётся доступен приватно во время перехода.
+4. Установите актуальные Paper Agent и оба Bungee Bridge JAR, обязательно настройте `/ws/plugin-io`. Старые RAW WebSocket JAR не подключатся.
 5. После запуска проверьте `/healthz`, HTTP сайта, Engine.IO `/ws/site`, handshake плагинов, онлайн и подтверждения покупок.
 
 На новой версии образа Docker автоматически публикуется через GitHub Actions из `main`; PR лишь тестирует, но не публикует продуктивный образ. Запуск в Pterodactyl не выполняется самим merge.
