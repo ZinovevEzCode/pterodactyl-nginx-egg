@@ -427,6 +427,16 @@
       "user_editable": true,
       "rules": "required|boolean",
       "field_type": "text"
+    },
+    {
+      "name": "Плагины · GitHub Read-only Token",
+      "description": "Только Laravel: приватные Github Releases Paper Agent, GML и Offline. Fine-grained Contents: Read-only для двух репозиториев; никогда не передавать в Minecraft JAR.",
+      "env_variable": "ANDLINE_RELEASES_GITHUB_TOKEN",
+      "default_value": "",
+      "user_viewable": false,
+      "user_editable": true,
+      "rules": "nullable|string",
+      "field_type": "text"
     }
   ]
 }
