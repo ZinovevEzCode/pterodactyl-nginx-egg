@@ -13,7 +13,7 @@ server {
     }
 
     # Никогда не проксировать приватные Minecraft подключения через публичный домен.
-    location ^~ /ws/plugin {
+    location ^~ /ws/ {
         return 404;
     }
 
