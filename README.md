@@ -1,351 +1,80 @@
-# ANDLINE Pterodactyl Runtime
+# ANDLINE — Pterodactyl EGG
 
-Production runtime, tailored specifically for the private repository `ZinovevEzCode/andline`.
+Единый runtime: **PHP 8.5 / Laravel**, **Node.js 24 / Socket.IO v4**, **nginx**, MariaDB (внешняя БД), PostgreSQL 17 + TimescaleDB (локальная либо внешняя), **Newt** (опционально).
 
-## Runtime
+- EGG для импорта: `egg-andline.json`
+- Docker/образ GHCR: `ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline`
+- Источник сайта: приватный `ZinovevEzCode/andline`
+- Новая система использует только `ANDLINE_AGENT_*`; алиасы `ANDBRIDGE_*` удалены из runtime.
 
-- Nginx
-- PHP 8.5 + PHP-FPM
-- Composer 2
-- Node.js 24 + npm
-- PostgreSQL 17 + TimescaleDB 2.30.2 OSS from the Timescale apt repository (not compiled during the image build)
-- Published image is `linux/amd64` only, so PHP packages are not installed a second time under QEMU
-- Supervisor
-- Newt 1.18.1 for Pangolin (optional)
+## Порты и Socket.IO
 
-PHP drivers include MariaDB/MySQL, PostgreSQL/TimescaleDB and SQLite support.
+| Назначение | Значение | Где доступно |
+|---|---|---|
+| HTTP сайта | Pterodactyl SERVER_PORT | Публичный nginx |
+| Socket.IO сайта/ЛК/админки | `/ws/site` | Публичный nginx |
+| Socket.IO Minecraft-плагинов | `/ws/plugin-io/`, namespace `/plugin` | **Только приватный Gateway** |
+| Legacy WebSocket старых JAR | `/ws/plugin` | **Только приватный Gateway** |
+| Node Gateway | `127.0.0.1:9443` | Только контейнер |
+| Локальный TimescaleDB | `127.0.0.1:5432` | Только контейнер |
 
-## ANDLINE repository layout
+У сайта три пространства имён Socket.IO на одном Engine.IO endpoint: `/` (публичный онлайн), `/admin` (админка), `/player` (уведомления). Отдельные `/ws/admin` и `/ws/player` удалены. В nginx явно закрыто всё, что начинается на `/ws/plugin`.
 
-The runtime expects the real application layout:
+Для удалённых Minecraft-серверов нужен **частный TLS endpoint** (VPN / защищённый tunnel / приватный reverse proxy). Не открывайте `/ws/plugin-io` в публичном веб-домене.
 
-```text
-/home/container/www
-├── artisan
-├── composer.json
-├── package.json
-├── webpack.mix.js
-├── admin/
-│   ├── package.json
-│   └── webpack.mix.js
-├── server/
-│   ├── package.json
-│   └── src/index.js
-├── public/
-└── resources/
-```
+## Переменные Pterodactyl
 
-### Public frontend
+| Переменная | Назначение |
+|---|---|
+| `GIT_ADDRESS`, `GIT_BRANCH`, `GIT_TOKEN` | Репозиторий, ветка и секретный токен |
+| `AUTO_PULL`, `FORCE_BUILD` | Поведение автоматического деплоя |
+| `BUILD_FRONTEND`, `BUILD_ADMIN`, `FORCE_NPM_CI` | Какие зависимости/ассеты пересобрать |
+| `APP_ENV`, `APP_DEBUG`, `APP_URL` | Настройки Laravel и публичного HTTPS |
+| `DB_*` | Основная MariaDB |
+| `TIMESCALE_ENABLED` | 1 — локальный кластер, 0 — внешний |
+| `TIMESCALE_HOST`, `TIMESCALE_PORT`, `TIMESCALE_DATABASE`, `TIMESCALE_USERNAME`, `TIMESCALE_PASSWORD`, `TIMESCALE_SSLMODE` | Единые параметры TimescaleDB |
+| `ANDLINE_AGENT_ENABLED` | Включает Node Gateway |
+| `ANDLINE_AGENT_GATEWAY_PORT` | Внутренний порт Gateway, по умолчанию 9443 |
+| `ANDLINE_AGENT_GATEWAY_SECRET` | Общий случайный секрет Laravel/Node (≥32 символа) |
+| `ANDLINE_AGENT_GATEWAY_PATH` | Legacy `/ws/plugin` (для ещё не обновлённых JAR) |
+| `ANDLINE_AGENT_PLUGIN_IO_PATH` | Приватный Socket.IO `/ws/plugin-io` |
+| `ANDLINE_AGENT_SITE_PATH` | Публичный Socket.IO `/ws/site` |
+| `ANDLINE_AGENT_WSS_URL` | Minecraft plugin URL через приватный маршрут |
+| `ANDLINE_AGENT_COLLISION_MODE` | Политика конкурирующих сессий |
+| `QUEUE_ENABLED`, `SCHEDULER_ENABLED` | Laravel queue и scheduler |
+| `NEWT_ENABLED`, `PANGOLIN_ENDPOINT`, `NEWT_ID`, `NEWT_SECRET` | Newt |
 
-Root `package.json` uses Laravel Mix / Webpack and is built with:
+Адрес `ANDLINE_AGENT_LARAVEL_URL` стартовый скрипт рассчитывает сам как `http://127.0.0.1:$SERVER_PORT`. Адреса браузерного Socket.IO строятся из `APP_URL`. Никакие `ANDBRIDGE_*` или отдельно `ADMIN_WS_URL`, `PLAYER_WS_URL` настраивать не нужно.
 
+## Обновление существующего сервера
+
+**Перед импортом нового EGG запишите текущие значения** Git-токена, секрета Gateway, параметров MariaDB, домена и Newt. Pterodactyl при новом импорте не переносит настройки удалённых полей на новые автоматически.
+
+1. Установите и проверьте совместимую версию `andline` со свежими `ANDLINE_AGENT_*` переменными и единым `/ws/site`.
+2. Импортируйте `egg-andline.json` в Pterodactyl, обновите привязку сервера к новой версии EGG и заполните переменные.
+3. Убедитесь, что у контейнера есть `ANDLINE_AGENT_GATEWAY_SECRET` длиной не менее 32 символов и правильный HTTPS `APP_URL`.
+4. Обновите Paper Agent и оба Bungee Bridge JAR. Legacy WebSocket `/ws/plugin` остаётся доступен приватно во время перехода.
+5. После запуска проверьте `/healthz`, HTTP сайта, Engine.IO `/ws/site`, handshake плагинов, онлайн и подтверждения покупок.
+
+На новой версии образа Docker автоматически публикуется через GitHub Actions из `main`; PR лишь тестирует, но не публикует продуктивный образ. Запуск в Pterodactyl не выполняется самим merge.
+
+## TimescaleDB
+
+При `TIMESCALE_ENABLED=1` кластер хранится в `/home/container/timescaledb/data`, а реквизиты — в `/home/container/timescaledb/connection.env`. Он доступен только по loopback. **Параметры уже созданного кластера не меняются простым редактированием переменных в панели.** Для изменения пароля/порта требуется явная миграция работающего кластера/конфигурации и резервная копия.
+
+При `TIMESCALE_ENABLED=0` используются указанные `TIMESCALE_HOST`, `TIMESCALE_PORT`, `TIMESCALE_*`.
+
+## Сборка / диагностика
+
+Путь сайта: `/home/container/www`. Старт: `/entrypoint.sh`. При наличии нового Git-коммита выполняются `composer install`, `npm run prod` для сайта/админки, `npm ci --omit=dev` для Node Gateway, миграции и кэширование Laravel. Скрипт не выполняет произвольные команды из EGG и не подменяет Composer зависимости при ошибке.
+
+Сейчас в upstream-сайте может отсутствовать `composer.lock`: это допускается для совместимости, но при таком развёртывании Composer сам разрешает зависимости. **Для воспроизводимого prod рекомендуется закоммитить корректный portable `composer.lock`.**
+
+Логи: `/home/container/logs/{deploy.log,node/,php/,laravel/,nginx/,build/,newt/}`.
+
+Проверка EGG:
 ```bash
-npm ci
-npm run prod
+python3 scripts/validate-egg.py egg-andline.json
 ```
 
-Output goes to `public/assets/js`.
-
-### Admin
-
-`admin/webpack.mix.js` writes directly to:
-
-```text
-public/assets/admin
-```
-
-The admin URL itself is a Laravel route/Blade shell:
-
-```text
-/admin
-/admin/*
-```
-
-Nginx therefore does **not** serve an independent `/admin/dist` SPA.
-
-### AndBridge gateway
-
-The real gateway is:
-
-```text
-/home/container/www/server/src/index.js
-```
-
-Runtime defaults:
-
-```env
-NODE_ENV=production
-ANDBRIDGE_GATEWAY_HOST=127.0.0.1
-ANDBRIDGE_GATEWAY_PORT=9443
-ANDBRIDGE_GATEWAY_PATH=/ws/plugin
-ANDBRIDGE_ADMIN_PATH=/ws/admin
-ANDBRIDGE_SITE_PATH=/ws/site
-ANDBRIDGE_PLAYER_PATH=/ws/player
-```
-
-Supervisor starts it directly with:
-
-```bash
-node src/index.js
-```
-
-Nginx proxies the browser sockets to the gateway and leaves the plugin path private:
-
-```text
-/ws/admin  -> 127.0.0.1:9443
-/ws/site   -> 127.0.0.1:9443
-/ws/player -> 127.0.0.1:9443
-```
-
-`ANDBRIDGE_GATEWAY_PATH` (default `/ws/plugin`) is not published. A prefix `location /ws/` would publish it, so the three browser paths are separate locations. WebSocket read and send timeouts are 3600 seconds. Empty `ANDBRIDGE_ADMIN_WS_URL`, `ANDBRIDGE_SITE_WS_URL` and `ANDBRIDGE_PLAYER_WS_URL` are filled from `APP_URL` plus the matching path.
-
-The internal Laravel URL is generated automatically as:
-
-```text
-http://127.0.0.1:<PTERODACTYL_SERVER_PORT>
-```
-
-so the gateway talks back to Laravel through the local Nginx instance.
-
-## Git deployment
-
-Default repository:
-
-```text
-https://github.com/ZinovevEzCode/andline.git
-```
-
-The repository is private, so configure `GIT_TOKEN` in the Pterodactyl egg. The token is sent as an HTTP Basic header and is never written into `.git/config`.
-
-On startup:
-
-1. clone/sync `main`;
-2. create persistent `.env` from `.env.example` if missing;
-3. detect whether the Git revision changed;
-4. on a new revision:
-   - install Composer dependencies;
-   - build root Vue/Laravel Mix;
-   - build admin Materio/Laravel Mix;
-   - install `server/` production dependencies;
-5. generate `APP_KEY` and `JWT_SECRET` if missing;
-6. clear stale Laravel caches;
-7. run migrations if enabled;
-8. optionally run seeders;
-9. rebuild production caches;
-10. start services through Supervisor.
-
-Changing Pterodactyl environment variables does not require a source-code change: Laravel caches are rebuilt on each container start.
-
-## Composer path-repository compatibility
-
-The current ANDLINE `composer.lock` contains packages installed from local Windows paths such as:
-
-```text
-C:/Users/User/Desktop/dreamcms/vendor/...
-```
-
-Those paths do not exist in Linux/Pterodactyl.
-
-Deployment first tries the normal:
-
-```bash
-composer install --no-dev --prefer-dist --optimize-autoloader
-```
-
-If it fails and the lock contains path distributions, `COMPOSER_PATH_FALLBACK=1` creates a temporary production Composer definition without the local `repositories` section and resolves the declared package constraints from public Composer repositories.
-
-This is a compatibility bridge. Long term, the ANDLINE repository should regenerate `composer.lock` from portable repositories so deployment is completely reproducible.
-
-## Supervisor processes
-
-```text
-timescaledb (PostgreSQL, optional)
-php-fpm
-nginx
-andbridge gateway
-laravel queue worker
-laravel scheduler
-newt (optional)
-```
-
-Newt starts last so the local web/gateway stack is already available before Pangolin exposes it.
-
-## Logs
-
-```text
-/home/container/logs/
-├── entrypoint.log
-├── deploy.log
-├── supervisord.log
-├── build/
-│   ├── composer.log
-│   ├── frontend.log
-│   ├── admin.log
-│   └── gateway.log
-├── nginx/
-├── php/
-├── laravel/
-├── node/
-│   ├── andbridge-gateway.log
-│   └── andbridge-gateway-error.log
-└── newt/
-```
-
-## Important Pterodactyl variables
-
-Application:
-
-```env
-APP_ENV=production
-APP_DEBUG=false
-APP_URL=https://your-domain.example
-```
-
-Primary database:
-
-```env
-DB_CONNECTION=mariadb
-DB_HOST=...
-DB_PORT=3306
-DB_DATABASE=andline
-DB_USERNAME=andline
-DB_PASSWORD=...
-```
-
-TimescaleDB:
-
-```env
-TIMESCALE_HOST=...
-TIMESCALE_PORT=5432
-TIMESCALE_DATABASE=andline_ts
-TIMESCALE_USERNAME=andline
-TIMESCALE_PASSWORD=...
-TIMESCALE_SSLMODE=prefer
-```
-
-AndBridge:
-
-```env
-ANDBRIDGE_GATEWAY_SECRET=<long-random-secret>
-ANDBRIDGE_GATEWAY_PORT=9443
-ANDBRIDGE_GATEWAY_PATH=/ws/plugin
-ANDBRIDGE_ADMIN_PATH=/ws/admin
-ANDBRIDGE_SITE_PATH=/ws/site
-ANDBRIDGE_PLAYER_PATH=/ws/player
-ANDBRIDGE_WSS_URL=ws://127.0.0.1:9443/ws/plugin
-ANDBRIDGE_COLLISION_MODE=LAST_WINS
-```
-
-Pangolin/Newt:
-
-```env
-NEWT_ENABLED=1
-PANGOLIN_ENDPOINT=https://pangolin.example
-NEWT_ID=...
-NEWT_SECRET=...
-```
-
-## Nginx + Pangolin
-
-Nginx preserves an incoming `X-Forwarded-Proto` from Pangolin/Newt. This matters because the AndBridge gateway rejects insecure WebSocket connections in production.
-
-Laravel also receives the forwarded HTTPS scheme through FastCGI.
-
-## Egg import HTTP 500
-
-The included `egg-andline.json` follows Pterodactyl `PTDL_v2` structure and is checked by `scripts/validate-egg.py`.
-
-If Pterodactyl 1.12.1 still returns HTTP 500 while importing a valid egg, check the Panel itself. A known Panel issue occurs when `APP_SERVICE_AUTHOR` is missing from the Panel `.env`.
-
-On the Pterodactyl Panel host:
-
-```env
-APP_SERVICE_AUTHOR=admin@example.com
-```
-
-Then rebuild Laravel config cache:
-
-```bash
-cd /var/www/pterodactyl
-php artisan config:clear
-php artisan config:cache
-```
-
-Use a real email address. This is a Panel configuration issue, not an egg runtime variable.
-
-## ANDLINE compatibility contract
-
-This runtime is tested against the site repository layout:
-
-```text
-andline/
-├── artisan
-├── composer.json
-├── package.json
-├── webpack.mix.js
-├── admin/
-│   ├── package.json
-│   └── webpack.mix.js
-└── server/
-    ├── package.json
-    └── src/index.js
-```
-
-Expected build/runtime behavior:
-
-- root frontend: `npm ci && npm run prod`;
-- admin frontend: `cd admin && npm ci && npm run prod`;
-- admin assets: `public/assets/admin`;
-- AndBridge gateway: `node server/src/index.js`;
-- gateway plugin endpoint: `/ws/plugin` on internal `127.0.0.1:9443`;
-- public/admin HTTP traffic goes through Laravel and Nginx;
-- MariaDB/MySQL is the primary business database;
-- TimescaleDB is a second PostgreSQL connection;
-- Newt/Pangolin is optional and starts after the local stack.
-
-## Pterodactyl
-
-Import:
-
-```text
-egg-andline.json
-```
-
-Target image after CI publishes it:
-
-```text
-ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline
-```
-
-
-Automatic GHCR publishing is enabled from `main`.
-
-## Local TimescaleDB service
-
-The image installs PostgreSQL 17 and TimescaleDB 2.30.2. Supervisor runs PostgreSQL
-before the web services, listening only on `127.0.0.1:5432`.
-No public Pterodactyl allocation is required.
-
-- `TIMESCALE_ENABLED=1` enables the local service (default); set to `0` to use an external database.
-- `TIMESCALE_DB_PORT=5432` controls its local port.
-- Data persists in `/home/container/timescaledb/data`.
-- Connection settings persist in `/home/container/timescaledb/connection.env` (mode 600).
-- Logs are in `/home/container/logs/timescaledb`.
-- The first startup uses `TIMESCALE_DATABASE` and `TIMESCALE_USERNAME`
-  (defaults `andline_ts` and `andline`). If `TIMESCALE_PASSWORD` is empty,
-  it generates a password once.
-- With the local service enabled, startup exports the persisted settings to the
-  application's existing `TIMESCALE_*` variables before deployment and migrations.
-  The generated application role is not a PostgreSQL superuser.
-- Later changes to panel credentials do not replace the persisted credentials;
-  change PostgreSQL credentials and the connection file together when rotating them.
-
-Initialization creates the database and enables the TimescaleDB extension.
-It does not replace the application's primary MariaDB/MySQL database.
-Back up the persistent cluster before upgrading PostgreSQL; changing its major
-version requires a database migration. The startup script refuses an incompatible
-existing cluster rather than reinitializing it.
-
-CI creates a hypertable through the application role and verifies its rows survive
-a database restart before publishing the image. Reimport the egg to expose the
-new service toggle and port fields in the panel; existing eggs use the defaults.
+Если импорт возвращает HTTP 500, проверьте **логи самой панели Pterodactyl** и настройку её `APP_SERVICE_AUTHOR`. Это ошибка панели, не Node Gateway.
