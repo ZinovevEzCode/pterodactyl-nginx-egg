@@ -39,6 +39,7 @@
 | `ANDLINE_AGENT_SITE_PATH` | Публичный Socket.IO `/ws/site` |
 | `ANDLINE_AGENT_WSS_URL` | Minecraft plugin URL через приватный маршрут |
 | `ANDLINE_AGENT_COLLISION_MODE` | Политика конкурирующих сессий |
+| `ANDLINE_RELEASES_GITHUB_TOKEN` | **Только для Laravel**: Fine-grained read-only PAT для зеркала приватных Paper, GML и Offline Releases |
 | `QUEUE_ENABLED`, `SCHEDULER_ENABLED` | Laravel queue и scheduler |
 | `NEWT_ENABLED`, `PANGOLIN_ENDPOINT`, `NEWT_ID`, `NEWT_SECRET` | Newt |
 
@@ -76,3 +77,27 @@ python3 scripts/validate-egg.py egg-andline.json
 ```
 
 Если импорт возвращает HTTP 500, проверьте **логи самой панели Pterodactyl** и настройку её `APP_SERVICE_AUTHOR`. Это ошибка панели, не Node Gateway.
+
+## Zero-Config плагины и приватные релизы
+
+В текущей архитектуре игровые Java-плагины **не содержат GitHub PAT и не подключаются к GitHub API**. Сайт синхронизирует приватные артефакты:
+
+```bash
+cd /home/container/www
+php artisan andline:plugin-releases-sync
+```
+
+Команда проверяет SHA256SUMS каждого GitHub Release, сохраняет три проверенных JAR в storage/app/andline_agent/plugin, а затем сайт выдаёт их только привязанным серверам с действующим Bearer-токеном. Манифест каждого сервера дополнительно подписывается HMAC. Для регулярных обновлений команда запускается Laravel Scheduler раз в час; включите `SCHEDULER_ENABLED=1`.
+
+В **Pterodactyl EGG сайта** введите `ANDLINE_RELEASES_GITHUB_TOKEN` — токен GitHub только с разрешением Contents: Read-only для репозиториев `andline-agent` и `andlinebridge`. Не передавайте его в переменные игровых серверов.
+
+В **Pterodactyl-окружении каждого игрового Paper/Bungee-сервера** задайте:
+
+- `ANDLINE_SITE_URL=https://<публичный-домен-сайта>` (сайт с HTTPS и API привязки);
+- `ANDLINE_STATE_KEY` — уникальный base64-ключ длиной 32 байта до кодирования. Генерация: `openssl rand -base64 32`.
+
+После создания сервера в админке выберите «Создать код привязки», затем в его игровой консоли выполните `/andline pair <код>` для Paper или `/andbridge pair <код>` для GML/Offline. Код действует 5 минут, одноразовый. Плагин создаёт `plugins/<plugin>/state.bin` (AES-256-GCM), сохраняет server ID, API-токен и приватный Socket.IO адрес. Прежний `config.yml` при первом запуске мигрируется и удаляется только после успешного сохранения бинарного файла.
+
+**Сохраняйте ANDLINE_STATE_KEY** в секретах панели / резервной копии. Его утрата делает `state.bin` нечитаемым; автоматически восстановить секреты из JAR нельзя. Не используйте один ключ для всех серверов. Отключите старые резервные копии с незашифрованными `config.yml` или удалите их отдельно после проверки миграции.
+
+Тайный `ANDLINE_AGENT_WSS_URL` на стороне сайта должен указывать на доступный плагинам приватный WSS TLS endpoint (`wss://.../ws/plugin-io`, namespace `/plugin`). Публичный nginx сайта продолжает обслуживать только `/ws/site`.
