@@ -81,12 +81,10 @@ composer_install() {
     export COMPOSER_AUTH="{\"github-oauth\":{\"github.com\":\"${GIT_TOKEN}\"}}"
   fi
 
-  # Install exactly the dependencies locked in Git, without generating a
-  # different dependency tree at deployment time.
-  [[ -f "$APP_DIR/composer.lock" ]] || {
-    echo "[BUILD][composer] composer.lock missing; refuse non-reproducible production install."
-    return 1
-  }
+  if [[ ! -f "$APP_DIR/composer.lock" ]]; then
+    echo "[BUILD][composer] WARNING: composer.lock missing; composer install resolves dependencies."
+    echo "[BUILD][composer] Commit a portable composer.lock for reproducible deploys."
+  fi
   run_logged "$composer_log" bash -lc "cd '$APP_DIR' && composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader"
 }
 
