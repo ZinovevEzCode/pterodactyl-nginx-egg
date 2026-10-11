@@ -12,7 +12,7 @@ envsubst '$SERVER_PORT $APP_DIR $ANDLINE_AGENT_GATEWAY_PORT $ANDLINE_AGENT_SITE_
   > /home/container/runtime/nginx/andline.conf
 /usr/sbin/nginx -t -c /opt/andline/nginx/nginx.conf
 grep -Fq 'location = /ws/site' /home/container/runtime/nginx/andline.conf
-grep -Fq 'location ^~ /ws/plugin' /home/container/runtime/nginx/andline.conf
+grep -Fq 'location ^~ /ws/' /home/container/runtime/nginx/andline.conf
 if grep -Eq 'location.*(/ws/admin|/ws/player)' /home/container/runtime/nginx/andline.conf; then
   echo '[NGINX] Legacy browser WS paths must not be exposed'
   exit 33
