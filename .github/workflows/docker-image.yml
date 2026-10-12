@@ -71,6 +71,7 @@ jobs:
             bash -n /usr/local/bin/andline-start
             bash -n /usr/local/bin/andline-websocket
             bash -n /usr/local/bin/andline-queue
+            bash -n /usr/local/bin/andline-plugin-release-queue
             bash -n /usr/local/bin/andline-scheduler
             bash -n /usr/local/bin/andline-newt
             bash -n /usr/local/bin/andline-timescaledb
