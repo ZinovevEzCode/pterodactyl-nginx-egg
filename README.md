@@ -4,7 +4,7 @@
 
 - EGG для импорта: `egg-andline.json`
 - Docker/образ GHCR: `ghcr.io/zinovevezcode/pterodactyl-nginx-egg:andline`
-- Источник сайта: приватный `ZinovevEzCode/andline`
+- Источник сайта: приватный `ZinovevAndline/andline`
 - Новая система использует только `ANDLINE_AGENT_*`; алиасы `ANDBRIDGE_*` удалены из runtime.
 
 ## Порты и Socket.IO
@@ -41,6 +41,7 @@
 | `ANDLINE_AGENT_COLLISION_MODE` | Политика конкурирующих сессий |
 | `ANDLINE_RELEASES_GITHUB_TOKEN` | **Только для Laravel**: Fine-grained read-only PAT для зеркала приватных Paper, GML и Offline Releases |
 | `QUEUE_ENABLED`, `SCHEDULER_ENABLED` | Laravel queue и scheduler |
+| `ANDLINE_RELEASES_GITHUB_WEBHOOK_SECRET` | HMAC-секрет для GitHub Release webhook, общий для Agent и Bridge репозиториев; хранится только в Laravel |
 | `NEWT_ENABLED`, `PANGOLIN_ENDPOINT`, `NEWT_ID`, `NEWT_SECRET` | Newt |
 
 Адрес `ANDLINE_AGENT_LARAVEL_URL` стартовый скрипт рассчитывает сам как `http://127.0.0.1:$SERVER_PORT`. Адреса браузерного Socket.IO строятся из `APP_URL`. Никакие `ANDBRIDGE_*` или отдельно `ADMIN_WS_URL`, `PLAYER_WS_URL` настраивать не нужно.
@@ -88,6 +89,14 @@ php artisan andline:plugin-releases-sync
 ```
 
 Команда проверяет SHA256SUMS каждого GitHub Release, сохраняет три проверенных JAR в storage/app/andline_agent/plugin, а затем сайт выдаёт их только привязанным серверам с действующим Bearer-токеном. Манифест каждого сервера дополнительно подписывается HMAC. Для регулярных обновлений команда запускается Laravel Scheduler раз в час; включите `SCHEDULER_ENABLED=1`.
+
+Runtime запускает отдельный Supervisor-процесс `laravel-plugin-release-queue`, который
+обрабатывает долгие загрузки JAR из очереди `release_database/plugin-releases`.
+Очередь работает даже при отключённом планировщике (`SCHEDULER_ENABLED=0`), если
+`QUEUE_ENABLED=1`. Смотреть её логи можно в Pterodactyl Files:
+`/home/container/logs/laravel/plugin-release-queue.log` и `plugin-release-queue-error.log`.
+Для ручной проверки через браузер используйте админку сайта:
+**Сервера → Обновления плагинов → Синхронизировать с GitHub** — `php artisan` в консоли не требуется.
 
 В **Pterodactyl EGG сайта** введите `ANDLINE_RELEASES_GITHUB_TOKEN` — токен GitHub только с разрешением Contents: Read-only для репозиториев `andline-agent` и `andlinebridge`. Не передавайте его в переменные игровых серверов.
 
