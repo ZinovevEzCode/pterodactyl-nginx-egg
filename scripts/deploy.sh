@@ -5,7 +5,7 @@ APP_DIR="${APP_DIR:-/home/container/www}"
 ADMIN_DIR="$APP_DIR/admin"
 GATEWAY_DIR="$APP_DIR/server"
 LOG_DIR="${LOG_DIR:-/home/container/logs}"
-GIT_ADDRESS="${GIT_ADDRESS:-https://github.com/ZinovevEzCode/andline.git}"
+GIT_ADDRESS="${GIT_ADDRESS:-https://github.com/ZinovevAndline/andline.git}"
 GIT_BRANCH="${GIT_BRANCH:-main}"
 DEPLOY_MARKER="/home/container/.andline-deploy-sha"
 

@@ -30,9 +30,9 @@
   "variables": [
     {
       "name": "GitHub · Репозиторий",
-      "description": "ANDLINE application repository.",
+      "description": "Main ANDLINE site repository (not the legacy ZinovevEzCode clone).",
       "env_variable": "GIT_ADDRESS",
-      "default_value": "https://github.com/ZinovevEzCode/andline.git",
+      "default_value": "https://github.com/ZinovevAndline/andline.git",
       "user_viewable": true,
       "user_editable": true,
       "rules": "required|string",
@@ -436,6 +436,16 @@
       "user_viewable": false,
       "user_editable": true,
       "rules": "nullable|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Плагины · GitHub Webhook Secret",
+      "description": "Секрет HMAC-SHA256 из Settings → Webhooks репозиториев andline-agent и andlinebridge. Одинаковый у обоих. Длина от 16 символов. Только для сайта Laravel.",
+      "env_variable": "ANDLINE_RELEASES_GITHUB_WEBHOOK_SECRET",
+      "default_value": "",
+      "user_viewable": false,
+      "user_editable": true,
+      "rules": "nullable|string|min:16",
       "field_type": "text"
     }
   ]
