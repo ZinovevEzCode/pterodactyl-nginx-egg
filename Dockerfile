@@ -80,6 +80,7 @@ COPY scripts/start.sh /usr/local/bin/andline-start
 COPY scripts/run-timescaledb.sh /usr/local/bin/andline-timescaledb
 COPY scripts/run-websocket.sh /usr/local/bin/andline-websocket
 COPY scripts/run-queue.sh /usr/local/bin/andline-queue
+COPY scripts/run-plugin-release-queue.sh /usr/local/bin/andline-plugin-release-queue
 COPY scripts/run-scheduler.sh /usr/local/bin/andline-scheduler
 COPY scripts/run-newt.sh /usr/local/bin/andline-newt
 COPY entrypoint.sh /entrypoint.sh
