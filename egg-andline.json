@@ -447,6 +447,36 @@
       "user_editable": true,
       "rules": "nullable|string|min:16",
       "field_type": "text"
+    },
+    {
+      "name": "TwoFA · Секрет подписи",
+      "description": "Ключ HMAC для защищённой авторизации TiAuth/Telegram/VK. Используется только Node Gateway. Отдельный от общего Gateway-секрета.",
+      "env_variable": "ANDLINE_AGENT_TWOFA_HMAC_SECRET",
+      "default_value": "",
+      "user_viewable": false,
+      "user_editable": true,
+      "rules": "nullable|string|min:16",
+      "field_type": "text"
+    },
+    {
+      "name": "TwoFA · Telegram Token",
+      "description": "Секретный токен Telegram-бота для подтверждения входа. Ссылку на бота задавайте в админке ANDLINE → Авторизация.",
+      "env_variable": "ANDLINE_AGENT_TWOFA_TELEGRAM_TOKEN",
+      "default_value": "",
+      "user_viewable": false,
+      "user_editable": true,
+      "rules": "nullable|string",
+      "field_type": "text"
+    },
+    {
+      "name": "TwoFA · VK Token",
+      "description": "Секретный токен сообщества VK для подтверждения входа. ID сообщества и ссылку задавайте в админке ANDLINE → Авторизация.",
+      "env_variable": "ANDLINE_AGENT_TWOFA_VK_TOKEN",
+      "default_value": "",
+      "user_viewable": false,
+      "user_editable": true,
+      "rules": "nullable|string",
+      "field_type": "text"
     }
   ]
 }
