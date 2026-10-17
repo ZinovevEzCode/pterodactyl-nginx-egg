@@ -76,6 +76,8 @@ COPY php/pool.d/www.conf /opt/andline/php/pool.d/www.conf
 COPY php/php.ini /opt/andline/php/php.ini
 COPY supervisor/supervisord.conf /opt/andline/supervisor/supervisord.conf
 COPY scripts/deploy.sh /usr/local/bin/andline-deploy
+COPY scripts/maintain-storage.sh /usr/local/bin/andline-maintain-storage
+COPY scripts/disk-usage.sh /usr/local/bin/andline-disk-usage
 COPY scripts/start.sh /usr/local/bin/andline-start
 COPY scripts/run-timescaledb.sh /usr/local/bin/andline-timescaledb
 COPY scripts/run-websocket.sh /usr/local/bin/andline-websocket

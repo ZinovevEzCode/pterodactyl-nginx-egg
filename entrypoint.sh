@@ -6,6 +6,7 @@ export LOG_DIR="${LOG_DIR:-/home/container/logs}"
 
 mkdir -p "$APP_DIR" "$LOG_DIR"/{nginx,php,node,laravel,build,newt} /home/container/runtime/nginx /home/container/runtime/newt /home/container/tmp/nginx/{client_temp,proxy_temp,fastcgi_temp}
 
+/usr/local/bin/andline-maintain-storage rotate-entrypoint || true
 exec > >(tee -a "$LOG_DIR/entrypoint.log") 2>&1
 
 echo "[ANDLINE] Container startup: $(date -Iseconds)"

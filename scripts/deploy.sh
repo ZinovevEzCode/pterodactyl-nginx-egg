@@ -8,8 +8,19 @@ LOG_DIR="${LOG_DIR:-/home/container/logs}"
 GIT_ADDRESS="${GIT_ADDRESS:-https://github.com/ZinovevAndline/andline.git}"
 GIT_BRANCH="${GIT_BRANCH:-main}"
 DEPLOY_MARKER="/home/container/.andline-deploy-sha"
+BUILD_PROFILE_MARKER="/home/container/.andline-build-profile"
+FRONTEND_BUILD_MODE="${FRONTEND_BUILD_MODE:-prod}"
+ADMIN_BUILD_MODE="${ADMIN_BUILD_MODE:-prod}"
+for mode in "$FRONTEND_BUILD_MODE" "$ADMIN_BUILD_MODE"; do
+  case "$mode" in
+    dev|prod) ;;
+    *) echo "[DEPLOY] Invalid build mode: $mode (expected dev or prod)" >&2; exit 64 ;;
+  esac
+done
+BUILD_PROFILE="frontend=$FRONTEND_BUILD_MODE;admin=$ADMIN_BUILD_MODE;site=${BUILD_FRONTEND:-1};panel=${BUILD_ADMIN:-1}"
 
 mkdir -p "$APP_DIR" "$LOG_DIR/build"
+/usr/local/bin/andline-maintain-storage rotate-deploy || echo "[DEPLOY] Log rotation warning" >&2
 exec > >(tee -a "$LOG_DIR/deploy.log") 2>&1
 
 is_true() {
@@ -89,11 +100,13 @@ composer_install() {
 }
 
 prepare_build_outputs_for_sync() {
-  local paths=(public/assets/js public/assets/css public/mix-manifest.json admin/dist)
+  local paths=(public/assets/js public/assets/css public/assets/admin public/mix-manifest.json admin/dist)
   local backup_dir="$LOG_DIR/build-backups/$(date -u +%Y%m%dT%H%M%SZ)-$"
   local file
   local tracked=()
   local untracked=()
+  local incoming=()
+  local -A incoming_paths=()
 
   mapfile -d '' -t tracked < <(git ls-files -z -- "${paths[@]}")
   mapfile -d '' -t untracked < <(git ls-files --others --exclude-standard -z -- "${paths[@]}")
@@ -105,11 +118,15 @@ prepare_build_outputs_for_sync() {
     git restore --source=HEAD --staged --worktree -- "${tracked[@]}"
   fi
 
-  # A locally generated chunk may become tracked in the incoming revision.
-  # Move only untracked build output aside; never clean the whole application.
+  # Preserve existing untracked chunks (open browsers may still request them).
+  # Back up only exact paths that become tracked by the incoming Git revision.
+  mapfile -d '' -t incoming < <(git ls-tree -r --name-only -z "origin/$GIT_BRANCH" -- "${paths[@]}")
+  for file in "${incoming[@]}"; do incoming_paths["$file"]=1; done
   for file in "${untracked[@]}"; do
+    [[ -n "${incoming_paths[$file]:-}" ]] || continue
     mkdir -p "$backup_dir/untracked/$(dirname "$file")"
     mv -- "$file" "$backup_dir/untracked/$file"
+    echo "[DEPLOY] Saved colliding untracked asset: $file"
   done
 }
 
@@ -143,14 +160,16 @@ fi
 
 HEAD_SHA="$(git rev-parse HEAD)"
 LAST_SHA="$(cat "$DEPLOY_MARKER" 2>/dev/null || true)"
+LAST_BUILD_PROFILE="$(cat "$BUILD_PROFILE_MARKER" 2>/dev/null || true)"
+ASSETS_BUILT=0
 NEEDS_BUILD=0
 
-if is_true "${FORCE_BUILD:-0}" || [[ "$HEAD_SHA" != "$LAST_SHA" ]] || [[ ! -f vendor/autoload.php ]]; then
+if is_true "${FORCE_BUILD:-0}" || [[ "$HEAD_SHA" != "$LAST_SHA" ]] || [[ ! -f vendor/autoload.php ]] || [[ "$BUILD_PROFILE" != "$LAST_BUILD_PROFILE" ]]; then
   NEEDS_BUILD=1
 fi
 
 if [[ "$NEEDS_BUILD" -eq 1 ]]; then
-  echo "[DEPLOY] Building revision $HEAD_SHA."
+  echo "[DEPLOY] Building revision $HEAD_SHA (frontend=$FRONTEND_BUILD_MODE, admin=$ADMIN_BUILD_MODE)."
 
   export COMPOSER_HOME="${COMPOSER_HOME:-/home/container/.composer}"
   export npm_config_cache="${npm_config_cache:-/home/container/.npm}"
@@ -159,13 +178,15 @@ if [[ "$NEEDS_BUILD" -eq 1 ]]; then
   composer_install
 
   if is_true "${BUILD_FRONTEND:-1}"; then
-    npm_build "$APP_DIR" "frontend" "npm run prod"
+    npm_build "$APP_DIR" "frontend" "npm run $FRONTEND_BUILD_MODE"
+    ASSETS_BUILT=1
   else
     echo "[BUILD][frontend] skipped (BUILD_FRONTEND=0)"
   fi
 
   if is_true "${BUILD_ADMIN:-1}"; then
-    npm_build "$ADMIN_DIR" "admin" "npm run prod"
+    npm_build "$ADMIN_DIR" "admin" "npm run $ADMIN_BUILD_MODE"
+    ASSETS_BUILT=1
   else
     echo "[BUILD][admin] skipped (BUILD_ADMIN=0)"
   fi
@@ -185,7 +206,7 @@ if [[ "$NEEDS_BUILD" -eq 1 ]]; then
     run_logged "$LOG_DIR/build/gateway.log" bash -lc "cd '$GATEWAY_DIR' && npm install --omit=dev"
   fi
 else
-  echo "[DEPLOY] Revision unchanged; Composer and Webpack builds skipped."
+  echo "[DEPLOY] Revision and build profile unchanged; Composer and Webpack builds skipped."
 fi
 
 mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache
@@ -224,8 +245,12 @@ if [[ -f artisan ]]; then
   fi
 fi
 
+# Cleanup is best-effort and cannot prevent serving a successful build.
+ASSETS_BUILT="$ASSETS_BUILT" /usr/local/bin/andline-maintain-storage postdeploy || echo "[DEPLOY] Storage maintenance warning" >&2
+
 if [[ "$NEEDS_BUILD" -eq 1 ]]; then
   printf '%s\n' "$HEAD_SHA" > "$DEPLOY_MARKER"
+  printf '%s\n' "$BUILD_PROFILE" > "$BUILD_PROFILE_MARKER"
 fi
 
 echo "[DEPLOY] ANDLINE deployment completed."

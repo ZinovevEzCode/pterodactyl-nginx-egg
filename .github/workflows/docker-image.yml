@@ -24,7 +24,10 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Validate PTDL_v2 egg
-        run: python3 scripts/validate-egg.py egg-andline.json
+        run: |
+          python3 scripts/validate-egg.py egg-andline.json
+          bash -n scripts/deploy.sh entrypoint.sh scripts/maintain-storage.sh scripts/disk-usage.sh scripts/smoke-maintenance.sh
+          bash scripts/smoke-maintenance.sh
 
   smoke:
     runs-on: ubuntu-latest
@@ -68,6 +71,8 @@ jobs:
             newt --version || newt --help >/dev/null
             bash -n /entrypoint.sh
             bash -n /usr/local/bin/andline-deploy
+            bash -n /usr/local/bin/andline-maintain-storage
+            bash -n /usr/local/bin/andline-disk-usage
             bash -n /usr/local/bin/andline-start
             bash -n /usr/local/bin/andline-websocket
             bash -n /usr/local/bin/andline-queue
